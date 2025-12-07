@@ -41,3 +41,70 @@ SLIM AI unifies IoT sensing, machine-learning-driven prediction, and blockchain-
 - Scalable coverage across many lakes without prohibitive costs.
 - Predictive insights that reduce ecological and public health risks.
 - Auditable, trustworthy data for regulators and stakeholders.
+
+---
+
+## FastAPI + Supabase backend
+The `backend/` folder contains a simple FastAPI service that ingests sensor readings from an ESP32 and stores them in a Supabase Postgres table.
+
+### Project structure
+```
+backend/
+  main.py                # FastAPI application with ingestion + query endpoints
+  supabase_client.py     # Cached Supabase client helper
+  requirements.txt       # Python dependencies
+  .env.example           # Example environment variables
+  migrations/
+    create_lake_readings.sql  # Table definition for Supabase
+```
+
+### Environment variables
+Copy `.env.example` to `.env` and set the values:
+- `SUPABASE_URL` – your Supabase project URL
+- `SUPABASE_SERVICE_ROLE_KEY` – service role key (required for inserts)
+- `API_SECRET_KEY` – shared secret used to validate the `x-api-key` request header
+
+### Running the backend
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+### API endpoints
+- `POST /api/lake-data` – ingest a reading after validating the `x-api-key` header
+- `GET /api/lake-data/latest` – fetch the most recent reading
+- `GET /api/lake-data/history?limit=100` – fetch the latest N readings (default 100, max 500)
+
+Example POST payload with header:
+```bash
+curl -X POST "http://localhost:8000/api/lake-data" \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: MY_SECRET_KEY" \
+  -d '{
+        "ph": 7.2,
+        "turbidity": 560,
+        "temperature": 26.4,
+        "do_level": 300
+      }'
+```
+
+### Supabase table
+Apply the SQL in `backend/migrations/create_lake_readings.sql` to create the `lake_readings` table:
+```sql
+CREATE TABLE lake_readings (
+    id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    timestamp timestamptz DEFAULT now(),
+    ph float,
+    turbidity float,
+    temperature float,
+    do_level float
+);
+```
+
+### Notes
+- CORS is enabled for all origins to simplify IoT testing.
+- The Supabase client is cached to avoid re-initialization overhead.
+- Requests fail fast with descriptive errors when the API key or Supabase configuration is missing.
