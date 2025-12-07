@@ -73,8 +73,10 @@ cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8000
+uvicorn main:app --host 0.0.0.0 --port 8000  # or: python main.py
 ```
+
+Once running, the interactive API docs (Swagger UI) are available at `http://localhost:8000/docs` and ReDoc at `http://localhost:8000/redoc`.
 
 ### API endpoints
 - `POST /api/lake-data` – ingest a reading after validating the `x-api-key` header
