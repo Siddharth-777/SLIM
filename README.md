@@ -65,6 +65,9 @@ Copy `.env.example` to `.env` and set the values:
 - `API_SECRET_KEY` – shared secret used to validate the `x-api-key` request header
 
 ### Running the backend
+1. **Set environment variables:** Copy `.env.example` to `.env` and fill in your Supabase URL, service role key, and API secret key.
+2. **Create the table:** Run the SQL in `backend/migrations/create_lake_readings.sql` against your Supabase database.
+3. **Install and start the API:**
 ```bash
 cd backend
 python -m venv .venv
