@@ -1,27 +1,31 @@
+#IMPORTS
 import os
-from functools import lru_cache
 from typing import Optional
-
 from dotenv import load_dotenv
 from supabase import Client, create_client
 
-
+#LOAD VARIABLES
 load_dotenv()
 
+#VERIFY CONFIGURATION
+class SupabaseConfigError(Exception):
+    pass
 
-class SupabaseConfigError(RuntimeError):
-    """Raised when Supabase configuration is invalid."""
+_supabase_client: Optional[Client] = None
 
-
-@lru_cache(maxsize=1)
+#CONNECT SUPABASE
 def get_supabase() -> Client:
-    """Return a cached Supabase client configured from environment variables."""
-    url: Optional[str] = os.getenv("SUPABASE_URL")
-    service_role_key: Optional[str] = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+    global _supabase_client
 
-    if not url or not service_role_key:
+    if _supabase_client is not None:
+        return _supabase_client
+
+    url = os.getenv("SUPABASE_URL")
+    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+    if not url or not key:
         raise SupabaseConfigError(
-            "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in the environment"
+            "SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set in the environment"
         )
-
-    return create_client(url, service_role_key)
+    _supabase_client = create_client(url, key)
+    return _supabase_client

@@ -1,16 +1,17 @@
+#IMPORTS
 import os
 from typing import List, Optional
-
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-
+from dotenv import load_dotenv
 from supabase_client import SupabaseConfigError, get_supabase
 
-
+#LOAD VARIABLES
+load_dotenv()
 API_KEY_ENV_VAR = "API_SECRET_KEY"
 
-
+#API VERIFICATION
 def verify_api_key(x_api_key: Optional[str] = Header(None)) -> None:
     expected_key = os.getenv(API_KEY_ENV_VAR)
     if not expected_key:
@@ -24,20 +25,21 @@ def verify_api_key(x_api_key: Optional[str] = Header(None)) -> None:
             detail="Invalid API key",
         )
 
-
 class LakeReading(BaseModel):
-    ph: float = Field(..., description="pH level of the water")
-    turbidity: float = Field(..., description="Turbidity measurement")
-    temperature: float = Field(..., description="Temperature in Celsius")
-    do_level: float = Field(..., description="Dissolved oxygen level")
-
-
+    ph: float
+    turbidity: float
+    temperature: float
+    do_level: float
 class LakeReadingResponse(LakeReading):
     id: int
-    timestamp: Optional[str] = Field(None, description="ISO timestamp of the reading")
+    timestamp: Optional[str]
 
-
-app = FastAPI(title="SLIM AI Lake Data API")
+#API POINT
+app = FastAPI(
+    title="SLIM AI Lake Data API",
+    docs_url="/data",
+    redoc_url=None
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -48,6 +50,7 @@ app.add_middleware(
 )
 
 
+#STORE READING
 @app.post("/api/lake-data", status_code=status.HTTP_201_CREATED)
 def ingest_lake_data(
     reading: LakeReading,
@@ -57,34 +60,29 @@ def ingest_lake_data(
         supabase = get_supabase()
     except SupabaseConfigError as exc:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-        ) from exc
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        )
+    response = supabase.table("lake_readings").insert(reading.model_dump()).execute()
 
-    response = (
-        supabase.table("lake_readings")
-        .insert(reading.dict())
-        .execute()
-    )
-
-    if response.error:
+    if getattr(response, "error", None):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=response.error.message,
+            detail=str(response.error),
         )
 
-    inserted = response.data[0]
-    return {"message": "Data received", "id": inserted.get("id")}
+    return {"message": "Data received", "id": response.data[0].get("id")}
 
-
+#FETCH LATEST READING
 @app.get("/api/lake-data/latest", response_model=LakeReadingResponse)
 def fetch_latest_reading():
     try:
         supabase = get_supabase()
     except SupabaseConfigError as exc:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-        ) from exc
-
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        )
     response = (
         supabase.table("lake_readings")
         .select("id,timestamp,ph,turbidity,temperature,do_level")
@@ -92,30 +90,30 @@ def fetch_latest_reading():
         .limit(1)
         .execute()
     )
-
-    if response.error:
+    if getattr(response, "error", None):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=response.error.message,
+            detail=str(response.error),
         )
-
     if not response.data:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="No readings available"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No readings available",
         )
 
     return response.data[0]
 
 
+#FETCH READ HISTORY
 @app.get("/api/lake-data/history", response_model=List[LakeReadingResponse])
 def fetch_reading_history(limit: int = Query(100, gt=0, le=500)):
     try:
         supabase = get_supabase()
     except SupabaseConfigError as exc:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)
-        ) from exc
-
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        )
     response = (
         supabase.table("lake_readings")
         .select("id,timestamp,ph,turbidity,temperature,do_level")
@@ -123,11 +121,9 @@ def fetch_reading_history(limit: int = Query(100, gt=0, le=500)):
         .limit(limit)
         .execute()
     )
-
-    if response.error:
+    if getattr(response, "error", None):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=response.error.message,
+            detail=str(response.error),
         )
-
     return response.data
