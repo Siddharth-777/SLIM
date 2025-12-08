@@ -14,7 +14,6 @@ def load_data():
     df = pd.read_csv(CSV_PATH, parse_dates=["timestamp"])
     df = df.sort_values("timestamp").reset_index(drop=True)
 
-    # Simple rolling mean to smooth curves a bit
     for col in SENSOR_COLUMNS:
         df[f"{col}_smooth"] = df[col].rolling(window=8, min_periods=3).mean()
 
@@ -70,7 +69,6 @@ def plot_monthly_boxplots(df):
         ax.set_xlabel("Month")
         ax.tick_params(axis="x", rotation=45)
 
-    # Remove the automatic "Boxplot grouped by month" super-title
     plt.suptitle("")
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 
@@ -87,7 +85,6 @@ def plot_correlation(df):
     ax.set_xticklabels(SENSOR_COLUMNS, rotation=45, ha="right")
     ax.set_yticklabels(SENSOR_COLUMNS)
 
-    # Put correlation values on the cells
     for i in range(len(SENSOR_COLUMNS)):
         for j in range(len(SENSOR_COLUMNS)):
             ax.text(
@@ -114,7 +111,6 @@ def main():
     plot_monthly_boxplots(df)
     plot_correlation(df)
 
-    # Show all figures (will open matplotlib popup windows)
     plt.show()
 
 
