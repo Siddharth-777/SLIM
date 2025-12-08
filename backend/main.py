@@ -127,3 +127,13 @@ def fetch_reading_history(limit: int = Query(100, gt=0, le=500)):
             detail=str(response.error),
         )
     return response.data
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", 8000)),
+    )
