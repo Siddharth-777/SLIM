@@ -113,3 +113,17 @@ CREATE TABLE lake_readings (
 - CORS is enabled for all origins to simplify IoT testing.
 - The Supabase client is cached to avoid re-initialization overhead.
 - Requests fail fast with descriptive errors when the API key or Supabase configuration is missing.
+
+### Visualizing a year's worth of readings
+An interactive Plotly dashboard can be generated directly from the CSV archive (sample provided in `backend/sample_lake_readings.csv`). From the `backend/` directory run:
+
+```bash
+pip install -r requirements.txt  # ensures pandas + plotly are present
+python visualize_lake_readings.py sample_lake_readings.csv --output lake_dashboard.html
+```
+
+Open the resulting `lake_dashboard.html` to explore:
+- Stacked time series with daily rolling averages and a range slider.
+- Diurnal temperature heatmap (hour vs. day of year).
+- Monthly box plots for seasonal shifts.
+- A quick correlation matrix across pH, turbidity, temperature, and DO.
