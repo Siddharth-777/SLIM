@@ -43,6 +43,8 @@ TARGETS = ["ph", "turbidity", "temperature", "do_level"]
 ESP32_BASE_URL = os.getenv("ESP32_BASE_URL", "http://10.232.148.112")
 # Default to the ESP32 firmware's exposed sensor route
 ESP32_DATA_PATH = os.getenv("ESP32_DATA_PATH", "/sensor")
+# Allow bumping the proxy timeout without code changes if the ESP32 is slow to respond
+ESP32_TIMEOUT_SECONDS = float(os.getenv("ESP32_TIMEOUT_SECONDS", "5.0"))
 
 _tft_models: Dict[str, TemporalFusionTransformer] = {}
 _tft_datasets: Dict[str, TimeSeriesDataSet] = {}
@@ -514,18 +516,35 @@ def query_lake_dataset(payload: DataQuery, _: None = Depends(verify_api_key)):
 
 
 @app.get("/api/esp32/data")
-async def fetch_esp32_data(_: None = Depends(verify_api_key)):
+async def fetch_esp32_data(
+    url_override: Optional[str] = Query(
+        None,
+        description=(
+            "Optional override for the ESP32 sensor URL (e.g., http://10.232.148.112/sensor). "
+            "Use this if the default base URL is unreachable from the server."
+        ),
+    ),
+    timeout_seconds: Optional[float] = Query(
+        None,
+        description="Optional request timeout override in seconds for the ESP32 proxy request.",
+        ge=1.0,
+        le=60.0,
+    ),
+    _: None = Depends(verify_api_key),
+):
     """Fetch raw JSON data directly from the ESP32 device."""
 
-    target_url = f"{ESP32_BASE_URL.rstrip('/')}{ESP32_DATA_PATH if ESP32_DATA_PATH.startswith('/') else '/' + ESP32_DATA_PATH}"
+    target_url = url_override or f"{ESP32_BASE_URL.rstrip('/')}{ESP32_DATA_PATH if ESP32_DATA_PATH.startswith('/') else '/' + ESP32_DATA_PATH}"
+    timeout = timeout_seconds or ESP32_TIMEOUT_SECONDS
 
     try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
+        async with httpx.AsyncClient(timeout=timeout) as client:
             response = await client.get(target_url)
     except httpx.RequestError as exc:
+        hint = "The ESP32 may be on a private network unreachable from this server. "
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Failed to reach ESP32 at {exc.request.url}: {exc}",
+            detail=f"Failed to reach ESP32 at {exc.request.url}: {exc}. {hint}Try setting a publicly reachable URL via the 'url_override' query parameter or ESP32_BASE_URL env var.",
         )
 
     if response.status_code != status.HTTP_200_OK:
