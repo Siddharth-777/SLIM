@@ -1,15 +1,12 @@
-#IMPORTS
 from pathlib import Path
-import pandas as pd
+
 import matplotlib.pyplot as plt
+import pandas as pd
 
-
-#CONFIG
 CSV_PATH = Path(__file__).parent / "sample_lake_readings.csv"
 SENSOR_COLUMNS = ["ph", "turbidity", "temperature", "do_level"]
 
 
-#LOAD DATA
 def load_data():
     df = pd.read_csv(CSV_PATH, parse_dates=["timestamp"])
     df = df.sort_values("timestamp").reset_index(drop=True)
@@ -21,7 +18,6 @@ def load_data():
     return df
 
 
-#PLOT TIME SERIES
 def plot_timeseries(df):
     fig, axes = plt.subplots(len(SENSOR_COLUMNS), 1, sharex=True, figsize=(10, 8))
     fig.suptitle("Lake Sensor Time Series", fontsize=14)
@@ -41,7 +37,6 @@ def plot_timeseries(df):
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 
 
-#PLOT MONTHLY BOXES
 def plot_monthly_boxplots(df):
     fig, axes = plt.subplots(2, 2, figsize=(10, 7))
     fig.suptitle("Monthly Distributions", fontsize=14)
@@ -73,7 +68,6 @@ def plot_monthly_boxplots(df):
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 
 
-#PLOT CORRELATION
 def plot_correlation(df):
     corr = df[SENSOR_COLUMNS].corr()
 
@@ -102,7 +96,6 @@ def plot_correlation(df):
     fig.tight_layout()
 
 
-#MAIN
 def main():
     df = load_data()
     print(f"Loaded {len(df)} readings from {CSV_PATH.name}")

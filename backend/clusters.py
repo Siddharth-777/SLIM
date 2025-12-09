@@ -1,6 +1,3 @@
-# clusters.py
-# --------- LOGIC ONLY – NO FASTAPI HERE ----------
-
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
@@ -11,8 +8,6 @@ from pydantic import BaseModel
 from sklearn.cluster import DBSCAN, KMeans
 from sklearn.decomposition import PCA
 
-
-# ================== Pydantic models ================== #
 
 class KMeansClusterInfo(BaseModel):
     cluster: int
@@ -45,8 +40,6 @@ class ClusterPatternsResponse(BaseModel):
     seasonal_clusters: SeasonalSummary
 
 
-# ================== Load data & fit models ================== #
-
 CSV_FILE = Path(__file__).resolve().parent / "sample_lake_readings.csv"
 
 df = pd.read_csv(CSV_FILE)
@@ -55,15 +48,12 @@ df = df.sort_values("timestamp").reset_index(drop=True)
 
 cluster_df = df[["ph", "turbidity", "temperature"]].ffill()
 
-# K-Means
 kmeans = KMeans(n_clusters=3, random_state=42)
 kmeans_labels = kmeans.fit_predict(cluster_df)
 
-# DBSCAN
 dbscan = DBSCAN(eps=0.5, min_samples=10)
 dbscan_labels = dbscan.fit_predict(cluster_df)
 
-# PCA (2D)
 pca = PCA(n_components=2)
 pca_result = pca.fit_transform(cluster_df)
 df["pc1"] = pca_result[:, 0]
@@ -81,15 +71,11 @@ def _detect_season(month: int) -> str:
 df["season"] = df["timestamp"].dt.month.apply(_detect_season)
 
 
-# ================== Public helper called from main.py ================== #
+def compute_cluster_patterns(
+    supabase: Optional[object] = None,
+) -> ClusterPatternsResponse:
+    """Compute clustering and pattern summaries and optionally store them."""
 
-def compute_cluster_patterns(supabase: Optional[object] = None) -> ClusterPatternsResponse:
-    """
-    Compute clustering / pattern summaries.
-    If a Supabase client is passed, also store a snapshot into the cluster_patterns table.
-    """
-
-    # ---- K-Means summary ----
     unique, counts = np.unique(kmeans_labels, return_counts=True)
     kmeans_summary: List[KMeansClusterInfo] = []
 
@@ -110,14 +96,12 @@ def compute_cluster_patterns(supabase: Optional[object] = None) -> ClusterPatter
             )
         )
 
-    # ---- DBSCAN summary ----
     dbscan_summary = DBSCANPatterns(
         core_points=int(np.sum(dbscan_labels != -1)),
         noise_points=int(np.sum(dbscan_labels == -1)),
         clusters_found=int(len(set(dbscan_labels)) - (1 if -1 in dbscan_labels else 0)),
     )
 
-    # ---- PCA sample output (first 200 rows) ----
     pca_output: List[PCAProjectionPoint] = []
     limit = min(200, len(df))
     for i in range(limit):
@@ -129,7 +113,6 @@ def compute_cluster_patterns(supabase: Optional[object] = None) -> ClusterPatter
             )
         )
 
-    # ---- Seasonal summary ----
     seasonal_summary = SeasonalSummary(
         summer=int((df["season"] == "summer").sum()),
         monsoon=int((df["season"] == "monsoon").sum()),
@@ -143,20 +126,30 @@ def compute_cluster_patterns(supabase: Optional[object] = None) -> ClusterPatter
         seasonal_clusters=seasonal_summary,
     )
 
-    # ---- Optional: store snapshot in Supabase ----
     if supabase is not None:
         try:
-            # quick lookup by cluster index
             cluster_map = {k.cluster: k for k in kmeans_summary}
             supabase.table("cluster_patterns").insert(
                 {
                     "timestamp": datetime.utcnow().isoformat(),
-                    "kmeans_cluster_0_count": cluster_map.get(0, KMeansClusterInfo(cluster=0, label="", count=0)).count,
-                    "kmeans_cluster_0_label": cluster_map.get(0, KMeansClusterInfo(cluster=0, label="", count=0)).label,
-                    "kmeans_cluster_1_count": cluster_map.get(1, KMeansClusterInfo(cluster=1, label="", count=0)).count,
-                    "kmeans_cluster_1_label": cluster_map.get(1, KMeansClusterInfo(cluster=1, label="", count=0)).label,
-                    "kmeans_cluster_2_count": cluster_map.get(2, KMeansClusterInfo(cluster=2, label="", count=0)).count,
-                    "kmeans_cluster_2_label": cluster_map.get(2, KMeansClusterInfo(cluster=2, label="", count=0)).label,
+                    "kmeans_cluster_0_count": cluster_map.get(
+                        0, KMeansClusterInfo(cluster=0, label="", count=0)
+                    ).count,
+                    "kmeans_cluster_0_label": cluster_map.get(
+                        0, KMeansClusterInfo(cluster=0, label="", count=0)
+                    ).label,
+                    "kmeans_cluster_1_count": cluster_map.get(
+                        1, KMeansClusterInfo(cluster=1, label="", count=0)
+                    ).count,
+                    "kmeans_cluster_1_label": cluster_map.get(
+                        1, KMeansClusterInfo(cluster=1, label="", count=0)
+                    ).label,
+                    "kmeans_cluster_2_count": cluster_map.get(
+                        2, KMeansClusterInfo(cluster=2, label="", count=0)
+                    ).count,
+                    "kmeans_cluster_2_label": cluster_map.get(
+                        2, KMeansClusterInfo(cluster=2, label="", count=0)
+                    ).label,
                     "dbscan_core_points": dbscan_summary.core_points,
                     "dbscan_noise_points": dbscan_summary.noise_points,
                     "dbscan_clusters_found": dbscan_summary.clusters_found,

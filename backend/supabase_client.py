@@ -1,19 +1,18 @@
-#IMPORTS
 import os
 from typing import Optional
 from dotenv import load_dotenv
 from supabase import Client, create_client
 
-#LOAD VARIABLES
 load_dotenv()
 
-#VERIFY CONFIGURATION
+
 class SupabaseConfigError(Exception):
     pass
 
+
 _supabase_client: Optional[Client] = None
 
-#CONNECT SUPABASE
+
 def get_supabase() -> Client:
     global _supabase_client
 

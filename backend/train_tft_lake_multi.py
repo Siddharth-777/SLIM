@@ -1,10 +1,3 @@
-# =============================================
-# train_tft_lake_multi.py
-# Train 4 TFT models: ph, turbidity, temperature, do_level
-# Uses sample_lake_readings.csv as source.
-# Saves best checkpoints + dataset definitions into artifacts/
-# =============================================
-
 import warnings
 
 warnings.filterwarnings(
@@ -35,29 +28,19 @@ ARTIFACT_DIR.mkdir(exist_ok=True, parents=True)
 TARGETS = ["ph", "turbidity", "temperature", "do_level"]
 
 
-# =========================================================
-# LOAD + CLEAN DATA
-# =========================================================
 def load_dataset() -> pd.DataFrame:
-    # expects a CSV like:
-    # timestamp,ph,turbidity,temperature,do_level
     df = pd.read_csv("sample_lake_readings.csv")
 
-    # Ensure timestamp is datetime
     df["timestamp"] = pd.to_datetime(df["timestamp"])
 
-    # Sort
     df = df.sort_values("timestamp").reset_index(drop=True)
 
-    # Single series id (one buoy/sensor network)
     df["series_id"] = "buoy_1"
 
-    # Time index in hours from first timestamp (just for training)
     df["time_idx"] = (
         (df["timestamp"] - df["timestamp"].min()).dt.total_seconds() // 3600
     ).astype(int)
 
-    # Fill missing numeric values
     for col in ["ph", "turbidity", "temperature", "do_level"]:
         if col in df.columns:
             df[col] = df[col].interpolate().bfill().ffill()
@@ -67,11 +50,7 @@ def load_dataset() -> pd.DataFrame:
     return df
 
 
-# =========================================================
-# BUILD TFT DATASET
-# =========================================================
 def build_datasets(df: pd.DataFrame, target: str):
-    # length of each series (we only have one, but general code)
     group_lengths = df.groupby("series_id")["time_idx"].nunique()
     min_length = int(group_lengths.min())
 
@@ -81,11 +60,9 @@ def build_datasets(df: pd.DataFrame, target: str):
             f"Need at least ~10 timesteps to train."
         )
 
-    # reasonably small windows vs series length
     max_prediction_length = min(24, max(1, min_length // 10))
     max_encoder_length = min(72, max(4, min_length - max_prediction_length))
 
-    # keep min lengths small so nothing gets filtered out
     min_encoder_length = 1
     min_prediction_length = 1
 
@@ -103,19 +80,14 @@ def build_datasets(df: pd.DataFrame, target: str):
         time_idx="time_idx",
         target=target,
         group_ids=["series_id"],
-
         max_encoder_length=max_encoder_length,
         max_prediction_length=max_prediction_length,
-
         min_encoder_length=min_encoder_length,
         min_prediction_length=min_prediction_length,
-
         time_varying_unknown_reals=["ph", "turbidity", "temperature", "do_level"],
         time_varying_known_reals=["time_idx"],
         static_categoricals=["series_id"],
-
         target_normalizer=GroupNormalizer(groups=["series_id"]),
-
         allow_missing_timesteps=True,
     )
 
@@ -129,9 +101,6 @@ def build_datasets(df: pd.DataFrame, target: str):
     return training, train_dl
 
 
-# =========================================================
-# CREATE TFT MODEL
-# =========================================================
 def build_model(training: TimeSeriesDataSet) -> TemporalFusionTransformer:
     model = TemporalFusionTransformer.from_dataset(
         training,
@@ -148,9 +117,6 @@ def build_model(training: TimeSeriesDataSet) -> TemporalFusionTransformer:
     return model
 
 
-# =========================================================
-# TRAINER
-# =========================================================
 def build_trainer(target: str):
     early_stop = EarlyStopping(
         monitor="train_loss",
@@ -181,9 +147,6 @@ def build_trainer(target: str):
     return trainer, checkpoint_cb
 
 
-# =========================================================
-# MAIN
-# =========================================================
 def main():
     seed_everything(42)
     print("Seed set to 42")
