@@ -84,6 +84,8 @@ def detect_events(payload: EventDetectionRequest) -> EventDetectionResponse:
     history = payload.previous_readings or []
     flags: List[EventSignal] = []
 
+    do_trend = _trend_slope(history[-5:], "do_level") if history else 0.0
+
     # Sudden polluted inflow
     polluted = (
         r.turbidity > TURB_MEAN + 2 * TURB_STD
@@ -119,7 +121,6 @@ def detect_events(payload: EventDetectionRequest) -> EventDetectionResponse:
     )
 
     # Aerator failure prediction
-    do_trend = _trend_slope(history[-5:], "do_level") if history else 0.0
     aerator_fail = (
         r.do_level < DO_MEAN - 1.5 * DO_STD
         and r.temperature > TEMP_MEAN + 0.5 * TEMP_STD
@@ -197,6 +198,158 @@ def detect_events(payload: EventDetectionRequest) -> EventDetectionResponse:
             triggered=night_day_trigger,
             severity="medium" if night_day_trigger else "none",
             reason=cycle_reason or "Hour not provided",
+        )
+    )
+
+    # Critical DO-driven fish mortality risk
+    do_critical = r.do_level <= 3 or r.do_level < DO_MEAN - 2 * DO_STD
+    fish_mortality = do_critical or (do_trend < -0.4 and r.do_level < DO_MEAN - DO_STD)
+    flags.append(
+        EventSignal(
+            name="Fish mortality prediction",
+            triggered=fish_mortality,
+            severity="high" if fish_mortality else "none",
+            reason=(
+                "Critical dissolved oxygen collapse; fish kill likely"
+                if fish_mortality
+                else "DO within survivable band"
+            ),
+        )
+    )
+
+    # Explicit DO threshold alert
+    do_below_three = r.do_level <= 3
+    flags.append(
+        EventSignal(
+            name="DO < 3 mg/L",
+            triggered=do_below_three,
+            severity="high" if do_below_three else "none",
+            reason=(
+                "DO reading below 3 mg/L survival threshold"
+                if do_below_three
+                else "Above 3 mg/L"
+            ),
+        )
+    )
+
+    # Heat stress + low oxygen combined anomaly
+    heat_low_do = (
+        r.temperature > TEMP_MEAN + TEMP_STD
+        and (r.do_level < DO_MEAN - DO_STD or do_critical)
+    )
+    flags.append(
+        EventSignal(
+            name="High temperature stress + low DO",
+            triggered=heat_low_do,
+            severity="high" if heat_low_do else "none",
+            reason=(
+                "Warming water with concurrent oxygen slump"
+                if heat_low_do
+                else "No combined heat/DO stress signature"
+            ),
+        )
+    )
+
+    # Algae bloom risk signals
+    temp_bloom = r.temperature > TEMP_MEAN + 0.75 * TEMP_STD
+    ph_bloom = r.ph > max(PH_MEAN + 0.8 * PH_STD, 8.3)
+    do_bloom = r.do_level < DO_MEAN - 0.75 * DO_STD or do_trend < -0.3
+
+    flags.append(
+        EventSignal(
+            name="Algae bloom - high temperature",
+            triggered=temp_bloom,
+            severity="medium" if temp_bloom else "none",
+            reason=(
+                "Thermally favorable conditions for bloom"
+                if temp_bloom
+                else "Temperature within normal band"
+            ),
+        )
+    )
+    flags.append(
+        EventSignal(
+            name="Algae bloom - high pH",
+            triggered=ph_bloom,
+            severity="medium" if ph_bloom else "none",
+            reason=(
+                "pH elevated into bloom-favoring range"
+                if ph_bloom
+                else "pH near baseline"
+            ),
+        )
+    )
+    flags.append(
+        EventSignal(
+            name="Algae bloom - low DO pattern",
+            triggered=do_bloom,
+            severity="medium" if do_bloom else "none",
+            reason=(
+                "Oxygen deficit consistent with bloom respiration"
+                if do_bloom
+                else "No bloom-driven DO depletion"
+            ),
+        )
+    )
+
+    multivariate_bloom = sum([temp_bloom, ph_bloom, do_bloom]) >= 2
+    flags.append(
+        EventSignal(
+            name="Algae bloom - multivariate trigger",
+            triggered=multivariate_bloom,
+            severity="high" if multivariate_bloom else "none",
+            reason=(
+                "Multiple bloom drivers aligned (temp/pH/DO)"
+                if multivariate_bloom
+                else "No combined bloom signature"
+            ),
+        )
+    )
+
+    # Sediment disturbance or clogging
+    turbidity_jump = (
+        r.turbidity > TURB_MEAN + 2.5 * TURB_STD
+        or (history and r.turbidity - history[-1].turbidity > 1.5 * TURB_STD)
+    )
+    flags.append(
+        EventSignal(
+            name="Clogging / sediment disturbance",
+            triggered=turbidity_jump,
+            severity="medium" if turbidity_jump else "none",
+            reason=(
+                "Sudden turbidity peak suggests resuspension/clogging"
+                if turbidity_jump
+                else "Turbidity stable"
+            ),
+        )
+    )
+
+    # Industrial contamination signatures
+    ph_anomaly = abs(r.ph - PH_MEAN) > 1.5 * PH_STD
+    flags.append(
+        EventSignal(
+            name="pH anomaly shift",
+            triggered=ph_anomaly,
+            severity="medium" if ph_anomaly else "none",
+            reason=(
+                "pH deviated sharply from baseline; possible industrial discharge"
+                if ph_anomaly
+                else "pH within normal envelope"
+            ),
+        )
+    )
+
+    acid_spill = r.ph < PH_MEAN - 2 * PH_STD and r.turbidity > TURB_MEAN + TURB_STD
+    flags.append(
+        EventSignal(
+            name="Industrial acid spill signature",
+            triggered=acid_spill,
+            severity="high" if acid_spill else "none",
+            reason=(
+                "Sharp pH drop with turbidity spike aligns with acid discharge"
+                if acid_spill
+                else "No acid spill signature"
+            ),
         )
     )
 
