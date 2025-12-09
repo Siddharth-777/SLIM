@@ -83,6 +83,8 @@ Once running, the interactive API docs (Swagger UI) are available at `http://loc
 - `GET /api/lake-data/latest` – fetch the most recent reading
 - `GET /api/lake-data/history?limit=100` – fetch the latest N readings (default 100, max 500)
 - `POST /api/data-query` – answer natural-language questions about the lake CSV via the Groq LLM
+- `POST /api/digital-twin` – simulate warming, pollution slug, and rainfall-driven turbidity recovery
+- `POST /api/event-detection` – label-free event checks (polluted inflow, rain turbidity, aerator risk)
 
 Example POST payload with header:
 ```bash

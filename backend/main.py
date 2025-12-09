@@ -22,7 +22,18 @@ from anomaly import (
 
 from clusters import ClusterPatternsResponse, compute_cluster_patterns
 from relationships import RelationshipAnalysisResponse, compute_relationship_insights
+from research_models import ResearchModelResponse, compute_research_models
 from tsf import TSFForecastResponse, compute_tsf_forecast
+from digital_twin import (
+    DigitalTwinRequest,
+    DigitalTwinResponse,
+    simulate_digital_twin,
+)
+from event_detection import (
+    EventDetectionRequest,
+    EventDetectionResponse,
+    detect_events,
+)
 
 
 load_dotenv()
@@ -422,6 +433,13 @@ def get_relationship_analysis(
     return compute_relationship_insights()
 
 
+@app.get("/api/research-models", response_model=ResearchModelResponse)
+def get_research_models(_: None = Depends(verify_api_key)):
+    """Advanced research-grade models: GNNs, causal effects, and evaluation."""
+
+    return compute_research_models()
+
+
 @app.get("/api/tsf", response_model=TSFForecastResponse)
 def get_tsf_forecasts(
     _: None = Depends(verify_api_key),
@@ -429,6 +447,26 @@ def get_tsf_forecasts(
     """Deliver hackathon-friendly time-series forecasts for lake health."""
 
     return compute_tsf_forecast()
+
+
+@app.post("/api/digital-twin", response_model=DigitalTwinResponse)
+def simulate_digital_twin_route(
+    payload: DigitalTwinRequest,
+    _: None = Depends(verify_api_key),
+):
+    """Run digital-twin style what-if scenarios using the 1-year archive."""
+
+    return simulate_digital_twin(payload)
+
+
+@app.post("/api/event-detection", response_model=EventDetectionResponse)
+def run_event_detection(
+    payload: EventDetectionRequest,
+    _: None = Depends(verify_api_key),
+):
+    """Detect label-free events like polluted inflow or aerator failure."""
+
+    return detect_events(payload)
 
 
 @app.post("/api/data-query", response_model=DataQueryResponse)
