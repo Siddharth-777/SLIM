@@ -1,4 +1,4 @@
-#IMPORTS
+# IMPORTS
 import os
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -12,19 +12,22 @@ from dotenv import load_dotenv
 from pytorch_forecasting import TimeSeriesDataSet
 from pytorch_forecasting.models import TemporalFusionTransformer
 from supabase_client import SupabaseConfigError, get_supabase
+from anomaly import LakeInput, FullAnomalyResponse, analyze_lake_reading
+from clusters import ClusterPatternsResponse, compute_cluster_patterns
 
-#LOAD VARIABLES
+
+# LOAD VARIABLES
 load_dotenv()
 API_KEY_ENV_VAR = "API_SECRET_KEY"
 ARTIFACT_DIR = Path(__file__).resolve().parent / "artifacts"
 TARGETS = ["ph", "turbidity", "temperature", "do_level"]
 
-
 _tft_models: Dict[str, TemporalFusionTransformer] = {}
 _tft_datasets: Dict[str, TimeSeriesDataSet] = {}
 _sanitized_ckpts: Dict[str, Path] = {}
 
-#API VERIFICATION
+
+# API VERIFICATION
 def verify_api_key(x_api_key: Optional[str] = Header(None)) -> None:
     expected_key = os.getenv(API_KEY_ENV_VAR)
     if not expected_key:
@@ -37,6 +40,7 @@ def verify_api_key(x_api_key: Optional[str] = Header(None)) -> None:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid API key",
         )
+
 
 class LakeReading(BaseModel):
     ph: float
@@ -57,11 +61,12 @@ class LakeReadingResponse(LakeReading):
     id: int
     timestamp: Optional[str]
 
-#API POINT
+
+# API POINT
 app = FastAPI(
     title="SLIM AI Lake Data API",
     docs_url="/data",
-    redoc_url=None
+    redoc_url=None,
 )
 
 app.add_middleware(
@@ -79,7 +84,6 @@ def _load_base_dataframe() -> pd.DataFrame:
     The CSV is used instead of a request body so the endpoint can be hit
     without any inputs while still providing real data to the models.
     """
-
     data_path = Path(__file__).resolve().parent / "sample_lake_readings.csv"
     if not data_path.exists():
         raise HTTPException(
@@ -115,7 +119,6 @@ def _load_base_dataframe() -> pd.DataFrame:
 
 def _sanitize_checkpoint(target: str, ckpt_path: Path) -> Path:
     """Remove unsupported keys from a TFT checkpoint and cache the path."""
-
     if target in _sanitized_ckpts:
         return _sanitized_ckpts[target]
 
@@ -123,7 +126,9 @@ def _sanitize_checkpoint(target: str, ckpt_path: Path) -> Path:
     hyper_parameters = checkpoint.get("hyper_parameters")
 
     if isinstance(hyper_parameters, dict) and "dataset" in hyper_parameters:
-        sanitized_ckpt = ckpt_path.with_name(f"{ckpt_path.stem}_sanitized{ckpt_path.suffix}")
+        sanitized_ckpt = ckpt_path.with_name(
+            f"{ckpt_path.stem}_sanitized{ckpt_path.suffix}"
+        )
         sanitized_hparams = dict(hyper_parameters)
         sanitized_hparams.pop("dataset", None)
         checkpoint["hyper_parameters"] = sanitized_hparams
@@ -135,9 +140,10 @@ def _sanitize_checkpoint(target: str, ckpt_path: Path) -> Path:
     return _sanitized_ckpts[target]
 
 
-def _load_tft_resources(target: str) -> Tuple[TemporalFusionTransformer, TimeSeriesDataSet]:
+def _load_tft_resources(
+    target: str,
+) -> Tuple[TemporalFusionTransformer, TimeSeriesDataSet]:
     """Load cached TFT model + dataset definition for a target column."""
-
     if target not in TARGETS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -173,46 +179,55 @@ def _load_tft_resources(target: str) -> Tuple[TemporalFusionTransformer, TimeSer
 
 def _determine_step_hours(df: pd.DataFrame) -> int:
     """Infer the timestep spacing (in hours) from the dataset."""
-
     diffs = df["timestamp"].diff().dt.total_seconds().dropna()
     if diffs.empty:
         return 1
-    # Use the most common step; default to 1 hour if inference fails
     mode_val = diffs.mode().iloc[0] if not diffs.mode().empty else 3600
     hours = max(1, int(round(mode_val / 3600)))
     return hours
 
 
-def _prepare_prediction_frame(df: pd.DataFrame, prediction_length: int) -> Tuple[pd.DataFrame, str]:
-    """Append future rows so the TFT model can forecast the next window."""
+def _prepare_prediction_frame(
+    df: pd.DataFrame, prediction_length: int
+) -> Tuple[pd.DataFrame, str]:
+    """Append future rows so the TFT model can forecast the next window.
 
+    IMPORTANT: we *do not* leave NaNs in the target columns. We copy the
+    last known values forward so that TimeSeriesDataSet does not complain
+    about NA / infinite values.
+    """
     step_hours = _determine_step_hours(df)
     last_timestamp = df["timestamp"].max()
     last_idx = int(df["time_idx"].max())
 
+    # last known sensor values
+    last_values = df.iloc[-1][TARGETS]
+
     future_rows = []
     for horizon in range(1, prediction_length + 1):
-        future_rows.append(
-            {
-                "timestamp": last_timestamp + pd.Timedelta(hours=step_hours * horizon),
-                "time_idx": last_idx + horizon,
-                "series_id": "buoy_1",
-                "ph": float("nan"),
-                "turbidity": float("nan"),
-                "temperature": float("nan"),
-                "do_level": float("nan"),
-            }
-        )
+        row = {
+            "timestamp": last_timestamp + pd.Timedelta(hours=step_hours * horizon),
+            "time_idx": last_idx + horizon,
+            "series_id": "buoy_1",
+        }
+        # copy last known reading for all targets
+        for col in TARGETS:
+            row[col] = float(last_values[col])
+        future_rows.append(row)
 
     future_df = pd.DataFrame(future_rows)
     combined = pd.concat([df, future_df], ignore_index=True)
+
+    # safety: ensure no NaNs slipped in anywhere
+    for col in TARGETS:
+        combined[col] = combined[col].interpolate().bfill().ffill()
+
     forecast_timestamp = future_rows[0]["timestamp"].isoformat()
     return combined, forecast_timestamp
 
 
 def _generate_forecast(df: pd.DataFrame) -> ForecastResponse:
     """Run TFT models for each parameter and return the next-step forecast."""
-
     predictions: Dict[str, float] = {}
     forecast_timestamp: Optional[str] = None
 
@@ -227,9 +242,10 @@ def _generate_forecast(df: pd.DataFrame) -> ForecastResponse:
             predict=True,
             stop_randomization=True,
         )
-        predict_loader = predict_ds.to_dataloader(train=False, batch_size=64, num_workers=0)
+        predict_loader = predict_ds.to_dataloader(
+            train=False, batch_size=64, num_workers=0
+        )
 
-        # model.predict returns [batch, prediction_length]; we use the first horizon
         forecast_tensor = model.predict(predict_loader)
         if forecast_tensor.ndim == 3:
             # Take median quantile if quantile dimension is present
@@ -245,7 +261,7 @@ def _generate_forecast(df: pd.DataFrame) -> ForecastResponse:
     )
 
 
-#STORE READING
+# STORE READING
 @app.post("/api/lake-data", status_code=status.HTTP_201_CREATED)
 def ingest_lake_data(
     reading: LakeReading,
@@ -268,7 +284,8 @@ def ingest_lake_data(
 
     return {"message": "Data received", "id": response.data[0].get("id")}
 
-#FETCH LATEST READING
+
+# FETCH LATEST READING
 @app.get("/api/lake-data/latest", response_model=LakeReadingResponse)
 def fetch_latest_reading():
     try:
@@ -299,7 +316,7 @@ def fetch_latest_reading():
     return response.data[0]
 
 
-#FETCH READ HISTORY
+# FETCH READ HISTORY
 @app.get("/api/lake-data/history", response_model=List[LakeReadingResponse])
 def fetch_reading_history(limit: int = Query(100, gt=0, le=500)):
     try:
@@ -332,6 +349,40 @@ def forecast_all():
     readings from the repository CSV and feeds them into the saved TFT models to
     predict the next timestep.
     """
-
     base_df = _load_base_dataframe()
     return _generate_forecast(base_df)
+
+# ANALYZE — ANOMALY DETECTION
+@app.post("/api/analyze", response_model=FullAnomalyResponse)
+def analyze_lake_data(
+    reading: LakeInput,
+    _: None = Depends(verify_api_key),
+):
+    result = analyze_lake_reading(reading)
+
+    # save to supabase
+    try:
+        supabase = get_supabase()
+        row = anomaly_to_row(reading, result)
+        supabase.table("anomaly_results").insert(row).execute()
+    except Exception as e:
+        print(f"[anomaly] Error saving to Supabase: {e}")
+
+    return result
+
+# PATTERNS — CLUSTER & SEASONAL PATTERNS
+@app.get("/api/patterns", response_model=ClusterPatternsResponse)
+def get_cluster_patterns(
+    _: None = Depends(verify_api_key),
+):
+    """
+    Return clustering, PCA and seasonal pattern summaries.
+    Also stores an aggregated snapshot in the `cluster_patterns`
+    table if Supabase is configured.
+    """
+    try:
+        supabase = get_supabase()
+    except SupabaseConfigError:
+        supabase = None
+
+    return compute_cluster_patterns(supabase=supabase)
