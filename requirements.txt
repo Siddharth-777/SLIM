@@ -4,8 +4,10 @@ supabase
 python-dotenv==1.0.1
 pydantic==2.9.2
 pandas==2.2.3
+numpy
+scikit-learn
 plotly==5.24.1
 matplotlib
-torch==2.9.1
-lightning==2.3.3
-pytorch-forecasting==1.5.0
+torch==2.3.1
+pytorch-lightning==2.3.3
+pytorch-forecasting==1.0.0
