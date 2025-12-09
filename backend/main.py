@@ -79,10 +79,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-def root():
-    return {"status": "ok", "service": "slim-lake-api"}
-
 
 def _load_base_dataframe() -> pd.DataFrame:
     """Load and normalize lake readings from the local CSV."""
