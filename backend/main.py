@@ -19,6 +19,7 @@ from anomaly import (
 )
 
 from clusters import ClusterPatternsResponse, compute_cluster_patterns
+from relationships import RelationshipAnalysisResponse, compute_relationship_insights
 
 
 load_dotenv()
@@ -366,3 +367,12 @@ def get_cluster_patterns(
         supabase = None
 
     return compute_cluster_patterns(supabase=supabase)
+
+
+@app.get("/api/relationships", response_model=RelationshipAnalysisResponse)
+def get_relationship_analysis(
+    _: None = Depends(verify_api_key),
+):
+    """Summarize inter-sensor relationships and lagged effects."""
+
+    return compute_relationship_insights()
