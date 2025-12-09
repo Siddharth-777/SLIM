@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SLIM | Lake Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #081120;
+      --panel: #0f1c33;
+      --border: #22324d;
+      --accent: #4f8bff;
+      --accent-2: #42d7f5;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --success: #22c55e;
+      --warning: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at 20% 20%, rgba(79, 139, 255, 0.08), transparent 35%),
+                  radial-gradient(circle at 80% 0%, rgba(66, 215, 245, 0.12), transparent 30%),
+                  var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .shell {
+      max-width: 1200px;
+      margin: 0 auto 60px auto;
+      display: grid;
+      gap: 24px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .title-block h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.6rem;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .title-block p {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .pill {
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(79, 139, 255, 0.14);
+      color: var(--accent-2);
+      font-weight: 600;
+      font-size: 0.9rem;
+      border: 1px solid rgba(79, 139, 255, 0.25);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: linear-gradient(135deg, rgba(17, 32, 55, 0.98), rgba(13, 26, 44, 0.9));
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 12px rgba(66, 215, 245, 0.9);
+    }
+
+    .api-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+
+    .api-card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      background: rgba(15, 28, 51, 0.9);
+    }
+
+    .api-card h3 {
+      margin-bottom: 10px;
+      font-size: 1rem;
+    }
+
+    .endpoint {
+      font-family: 'Space Grotesk', monospace;
+      background: rgba(79, 139, 255, 0.08);
+      border: 1px dashed var(--border);
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .api-card p {
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    button {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #031023;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.2s ease;
+      box-shadow: 0 8px 20px rgba(79, 139, 255, 0.35);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 25px rgba(79, 139, 255, 0.45);
+    }
+
+    button.secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      box-shadow: none;
+    }
+
+    .map-wrapper {
+      position: relative;
+      height: 540px;
+      border-radius: 18px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #0c1b2f 0%, #0a1628 20%, #0c1b2f 40%, #0a1628 60%, #0c1b2f 100%);
+      border: 1px solid var(--border);
+    }
+
+    .map-grid {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .bank {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 20% 20%, rgba(66, 215, 245, 0.14), transparent 30%),
+                  radial-gradient(circle at 80% 70%, rgba(79, 139, 255, 0.15), transparent 30%);
+      z-index: 0;
+      filter: blur(32px);
+    }
+
+    .river-path {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(79, 139, 255, 0.08), rgba(79, 139, 255, 0.18) 48%, rgba(79, 139, 255, 0.1));
+      clip-path: path('M 0 70 Q 200 120 400 80 T 800 110 T 1200 90 V 600 H 0 Z');
+      opacity: 0.8;
+      z-index: 0;
+    }
+
+    .buoy {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent-2);
+      border: 2px solid #0a1628;
+      box-shadow: 0 0 0 0 rgba(79, 139, 255, 0.3), 0 4px 12px rgba(0, 0, 0, 0.25);
+      cursor: pointer;
+      z-index: 3;
+      transform: translate(-50%, -50%);
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .buoy:hover {
+      transform: translate(-50%, -50%) scale(1.08);
+      box-shadow: 0 0 0 8px rgba(79, 139, 255, 0.12), 0 6px 16px rgba(0, 0, 0, 0.35);
+    }
+
+    .buoy.selected {
+      background: #fff;
+      box-shadow: 0 0 0 10px rgba(79, 139, 255, 0.16), 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    .label {
+      position: absolute;
+      background: rgba(4, 11, 22, 0.9);
+      border: 1px solid var(--border);
+      padding: 6px 8px;
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--text);
+      transform: translate(-50%, calc(-100% - 8px));
+      white-space: nowrap;
+      z-index: 4;
+    }
+
+    .info-panel {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .metric {
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .metric .label {
+      position: static;
+      transform: none;
+      background: none;
+      border: none;
+      padding: 0;
+      margin-bottom: 6px;
+      color: var(--muted);
+    }
+
+    .metric .value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      background: rgba(12, 24, 44, 0.85);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .card h4 {
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    ul.parameters {
+      list-style: none;
+      display: grid;
+      gap: 8px;
+    }
+
+    ul.parameters li {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 0.95rem;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 8px 10px;
+      border-radius: 8px;
+    }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    .history-table th, .history-table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      font-size: 0.92rem;
+    }
+
+    .history-table th {
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 0.8rem;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.6);
+    }
+
+    .status-dot.good { background: var(--success); }
+    .status-dot.warn { background: var(--warning); box-shadow: 0 0 10px rgba(245, 158, 11, 0.6); }
+
+    .legend {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      background: rgba(4, 11, 22, 0.9);
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      display: grid;
+      gap: 6px;
+      z-index: 4;
+    }
+
+    .legend div { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+
+    .legend span {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent-2);
+    }
+
+    .latest-log {
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 12px;
+      max-height: 180px;
+      overflow: auto;
+      font-family: 'Space Grotesk', monospace;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .badge { font-size: 0.8rem; padding: 4px 8px; border-radius: 8px; }
+    .badge.good { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+    .badge.warn { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+
+    @media (max-width: 960px) {
+      .grid { grid-template-columns: 1fr; }
+      .map-wrapper { height: 440px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="title-block">
+        <div class="pill">Live Preview</div>
+        <h1>Lake Monitoring Dashboard</h1>
+        <p>Interactive mock of lake data monitoring using the existing API surface. Tap a buoy to preview its latest values and explore the simulated history feed.</p>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="section-title">API Actions</div>
+      <div class="api-cards">
+        <div class="api-card">
+          <h3>Fetch Latest Reading</h3>
+          <div class="endpoint">GET /api/lake-data/latest</div>
+          <p>Loads the most recent observation per buoy. Falls back to mock data in this static preview.</p>
+          <button id="load-latest">Trigger Latest Fetch</button>
+        </div>
+        <div class="api-card">
+          <h3>Fetch Reading History</h3>
+          <div class="endpoint">GET /api/lake-data/history</div>
+          <p>Retrieves a time series for all buoys. The mock deck parses sample CSV to illustrate the flow.</p>
+          <button id="load-history">Trigger History Fetch</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="panel">
+        <div class="section-title">River Overview</div>
+        <div class="map-wrapper" id="map">
+          <div class="bank"></div>
+          <div class="river-path"></div>
+          <div class="map-grid"></div>
+          <div class="legend">
+            <div><span></span> Buoy marker</div>
+            <div><span style="background: #fff; box-shadow: 0 0 10px rgba(79, 139, 255, 0.6);"></span> Selected buoy</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="details-panel">
+        <div class="section-title">Buoy Details</div>
+        <div id="buoy-name" style="font-size:1.4rem; font-weight:700; margin-bottom: 6px;">Choose a buoy</div>
+        <div id="buoy-meta" style="color: var(--muted); margin-bottom: 10px;">Tap a marker on the map to inspect its telemetry.</div>
+        <div class="info-panel">
+          <div class="metric">
+            <div class="label">Water Temp</div>
+            <div class="value" id="temp">--</div>
+          </div>
+          <div class="metric">
+            <div class="label">Dissolved Oxygen</div>
+            <div class="value" id="oxygen">--</div>
+          </div>
+          <div class="metric">
+            <div class="label">pH</div>
+            <div class="value" id="ph">--</div>
+          </div>
+          <div class="metric">
+            <div class="label">Turbidity</div>
+            <div class="value" id="turbidity">--</div>
+          </div>
+        </div>
+
+        <div class="details-grid">
+          <div class="card">
+            <h4>Latest Snapshot</h4>
+            <ul class="parameters" id="snapshot"></ul>
+          </div>
+          <div class="card">
+            <h4>Health Status</h4>
+            <ul class="parameters" id="health"></ul>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <div class="section-title">History Preview</div>
+      <div style="overflow-x: auto;">
+        <table class="history-table" id="history-table">
+          <thead>
+            <tr>
+              <th>Buoy</th>
+              <th>Timestamp</th>
+              <th>Temp (°C)</th>
+              <th>pH</th>
+              <th>Oxygen (mg/L)</th>
+              <th>Turbidity (NTU)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="latest-log" id="log"></div>
+    </section>
+  </div>
+
+  <script>
+    const buoys = [
+      { id: 'B-01', name: 'North Bend', position: { x: 8, y: 22 }, status: 'good', distanceKm: 2.4 },
+      { id: 'B-02', name: 'Cove Point', position: { x: 15, y: 32 }, status: 'good', distanceKm: 4.8 },
+      { id: 'B-03', name: 'Delta Fork', position: { x: 25, y: 18 }, status: 'warn', distanceKm: 7.2 },
+      { id: 'B-04', name: 'Channel Gate', position: { x: 35, y: 30 }, status: 'good', distanceKm: 9.5 },
+      { id: 'B-05', name: 'Midstream', position: { x: 45, y: 42 }, status: 'good', distanceKm: 12.1 },
+      { id: 'B-06', name: 'Research Pier', position: { x: 57, y: 34 }, status: 'good', distanceKm: 14.7 },
+      { id: 'B-07', name: 'Harbor Mouth', position: { x: 65, y: 20 }, status: 'warn', distanceKm: 17.6 },
+      { id: 'B-08', name: 'South Point', position: { x: 74, y: 36 }, status: 'good', distanceKm: 20.2 },
+      { id: 'B-09', name: 'Estuary Rise', position: { x: 86, y: 28 }, status: 'good', distanceKm: 22.9 },
+      { id: 'B-10', name: 'Outlet Gate', position: { x: 92, y: 44 }, status: 'good', distanceKm: 25.5 },
+    ];
+
+    const mockHistoryCsv = `buoy_id,timestamp,temperature_c,ph,dissolved_oxygen_mg_l,turbidity_ntu
+B-01,2024-04-01T10:00:00Z,16.2,7.4,8.9,2.1
+B-02,2024-04-01T10:00:00Z,16.5,7.5,9.1,2.0
+B-03,2024-04-01T10:00:00Z,17.0,7.1,8.2,3.8
+B-04,2024-04-01T10:00:00Z,16.4,7.3,8.7,2.6
+B-05,2024-04-01T10:00:00Z,16.9,7.4,8.8,2.4
+B-06,2024-04-01T10:00:00Z,16.7,7.5,9.0,2.3
+B-07,2024-04-01T10:00:00Z,17.3,7.0,8.1,4.5
+B-08,2024-04-01T10:00:00Z,16.8,7.4,8.9,2.6
+B-09,2024-04-01T10:00:00Z,16.6,7.2,8.6,2.9
+B-10,2024-04-01T10:00:00Z,16.5,7.4,8.7,2.7`;
+
+    let selectedBuoy = null;
+
+    function renderBuoys() {
+      const map = document.getElementById('map');
+      buoys.forEach((buoy) => {
+        const marker = document.createElement('div');
+        marker.className = 'buoy';
+        marker.style.left = `${buoy.position.x}%`;
+        marker.style.top = `${buoy.position.y}%`;
+        marker.dataset.id = buoy.id;
+        marker.addEventListener('click', () => selectBuoy(buoy.id));
+
+        const label = document.createElement('div');
+        label.className = 'label';
+        label.textContent = `${buoy.id} · ${buoy.name}`;
+
+        marker.appendChild(label);
+        map.appendChild(marker);
+      });
+    }
+
+    function selectBuoy(id) {
+      selectedBuoy = buoys.find((b) => b.id === id);
+      document.querySelectorAll('.buoy').forEach((m) => m.classList.toggle('selected', m.dataset.id === id));
+
+      const meta = `${selectedBuoy.name} · River km ${selectedBuoy.distanceKm.toFixed(1)} · Status: ${selectedBuoy.status.toUpperCase()}`;
+      document.getElementById('buoy-name').textContent = `${selectedBuoy.id} — ${selectedBuoy.name}`;
+      document.getElementById('buoy-meta').textContent = meta;
+
+      const metrics = mockLatestReading(selectedBuoy.id);
+      document.getElementById('temp').textContent = `${metrics.temperature_c.toFixed(1)}°C`;
+      document.getElementById('oxygen').textContent = `${metrics.dissolved_oxygen_mg_l.toFixed(1)} mg/L`;
+      document.getElementById('ph').textContent = metrics.ph.toFixed(2);
+      document.getElementById('turbidity').textContent = `${metrics.turbidity_ntu.toFixed(1)} NTU`;
+
+      const snapshot = document.getElementById('snapshot');
+      snapshot.innerHTML = '';
+      [
+        ['Timestamp', new Date(metrics.timestamp).toLocaleString()],
+        ['Conductivity', `${(260 + Math.random() * 20).toFixed(0)} µS/cm`],
+        ['Depth', `${(6 + Math.random() * 2).toFixed(1)} m`],
+        ['Battery', `${(78 + Math.random() * 8).toFixed(0)}%`],
+      ].forEach(([label, value]) => snapshot.appendChild(buildRow(label, value)));
+
+      const health = document.getElementById('health');
+      health.innerHTML = '';
+      health.appendChild(buildRow('Algae bloom risk', riskLabel(metrics.turbidity_ntu)));
+      health.appendChild(buildRow('Dissolved oxygen', metrics.dissolved_oxygen_mg_l >= 8.0 ? tag('Stable', 'good') : tag('Low', 'warn')));
+      health.appendChild(buildRow('pH window', metrics.ph >= 7.1 && metrics.ph <= 7.8 ? tag('Neutral', 'good') : tag('Investigate', 'warn')));
+      health.appendChild(buildRow('Telemetry', tag('Synced', 'good')));
+    }
+
+    function buildRow(label, value) {
+      const li = document.createElement('li');
+      const spanA = document.createElement('span');
+      spanA.textContent = label;
+      const spanB = document.createElement('span');
+      if (typeof value === 'string') spanB.innerHTML = value; else spanB.appendChild(value);
+      li.append(spanA, spanB);
+      return li;
+    }
+
+    function tag(text, tone = 'good') {
+      const el = document.createElement('span');
+      el.className = `badge ${tone}`;
+      el.textContent = text;
+      return el;
+    }
+
+    function riskLabel(turbidity) {
+      return turbidity > 3.5 ? tag('Monitor', 'warn') : tag('Clear', 'good');
+    }
+
+    function mockLatestReading(id) {
+      const baseTemp = 16.4 + buoys.findIndex((b) => b.id === id) * 0.1;
+      return {
+        buoy_id: id,
+        timestamp: new Date().toISOString(),
+        temperature_c: baseTemp + Math.random() * 0.8,
+        ph: 7.1 + Math.random() * 0.5,
+        dissolved_oxygen_mg_l: 8.3 + Math.random() * 1.0,
+        turbidity_ntu: 2.0 + Math.random() * 2.5,
+      };
+    }
+
+    async function fetchLatest() {
+      log('Requesting GET /api/lake-data/latest ...');
+      let payload;
+      try {
+        const res = await fetch('/api/lake-data/latest');
+        if (!res.ok) throw new Error('network');
+        payload = await res.json();
+        log('Loaded live payload from API');
+      } catch (err) {
+        payload = buoys.map((b) => mockLatestReading(b.id));
+        log('API unavailable, showing mock latest readings.');
+      }
+      renderLatestLog(payload);
+      if (selectedBuoy) selectBuoy(selectedBuoy.id);
+    }
+
+    async function fetchHistory() {
+      log('Requesting GET /api/lake-data/history ...');
+      let rows;
+      try {
+        const res = await fetch('/api/lake-data/history');
+        if (!res.ok) throw new Error('network');
+        rows = await res.json();
+        log('Loaded live history from API');
+      } catch (err) {
+        rows = parseCsv(mockHistoryCsv);
+        log('API unavailable, parsed mock CSV history.');
+      }
+      renderHistory(rows);
+    }
+
+    function renderLatestLog(data) {
+      const logBox = document.getElementById('log');
+      logBox.innerHTML = data
+        .map((row) => `${row.buoy_id}: temp ${row.temperature_c.toFixed(1)}°C | pH ${row.ph.toFixed(2)} | O2 ${row.dissolved_oxygen_mg_l.toFixed(1)} mg/L | turb ${row.turbidity_ntu.toFixed(1)} NTU`)
+        .join('\n');
+    }
+
+    function renderHistory(rows) {
+      const tbody = document.querySelector('#history-table tbody');
+      tbody.innerHTML = '';
+      rows.slice(0, 20).forEach((row) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><span class="status-dot ${buoys.find((b) => b.id === row.buoy_id)?.status === 'warn' ? 'warn' : 'good'}"></span>${row.buoy_id}</td>
+          <td>${new Date(row.timestamp).toLocaleString()}</td>
+          <td>${Number(row.temperature_c).toFixed(1)}</td>
+          <td>${Number(row.ph).toFixed(2)}</td>
+          <td>${Number(row.dissolved_oxygen_mg_l).toFixed(1)}</td>
+          <td>${Number(row.turbidity_ntu).toFixed(1)}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function parseCsv(csv) {
+      const [header, ...lines] = csv.trim().split(/\r?\n/);
+      const keys = header.split(',');
+      return lines.map((line) => {
+        const vals = line.split(',');
+        return Object.fromEntries(keys.map((k, i) => [k, vals[i]]));
+      });
+    }
+
+    function log(message) {
+      const logBox = document.getElementById('log');
+      const time = new Date().toLocaleTimeString();
+      logBox.textContent = `[${time}] ${message}\n` + logBox.textContent;
+    }
+
+    document.getElementById('load-latest').addEventListener('click', fetchLatest);
+    document.getElementById('load-history').addEventListener('click', fetchHistory);
+    renderBuoys();
+    fetchHistory();
+  </script>
+</body>
+</html>
