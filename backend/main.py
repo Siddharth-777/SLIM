@@ -22,6 +22,7 @@ TARGETS = ["ph", "turbidity", "temperature", "do_level"]
 
 _tft_models: Dict[str, TemporalFusionTransformer] = {}
 _tft_datasets: Dict[str, TimeSeriesDataSet] = {}
+_sanitized_ckpts: Dict[str, Path] = {}
 
 #API VERIFICATION
 def verify_api_key(x_api_key: Optional[str] = Header(None)) -> None:
@@ -112,6 +113,28 @@ def _load_base_dataframe() -> pd.DataFrame:
     return df
 
 
+def _sanitize_checkpoint(target: str, ckpt_path: Path) -> Path:
+    """Remove unsupported keys from a TFT checkpoint and cache the path."""
+
+    if target in _sanitized_ckpts:
+        return _sanitized_ckpts[target]
+
+    checkpoint = torch.load(ckpt_path, map_location=torch.device("cpu"))
+    hyper_parameters = checkpoint.get("hyper_parameters")
+
+    if isinstance(hyper_parameters, dict) and "dataset" in hyper_parameters:
+        sanitized_ckpt = ckpt_path.with_name(f"{ckpt_path.stem}_sanitized{ckpt_path.suffix}")
+        sanitized_hparams = dict(hyper_parameters)
+        sanitized_hparams.pop("dataset", None)
+        checkpoint["hyper_parameters"] = sanitized_hparams
+        torch.save(checkpoint, sanitized_ckpt)
+        _sanitized_ckpts[target] = sanitized_ckpt
+    else:
+        _sanitized_ckpts[target] = ckpt_path
+
+    return _sanitized_ckpts[target]
+
+
 def _load_tft_resources(target: str) -> Tuple[TemporalFusionTransformer, TimeSeriesDataSet]:
     """Load cached TFT model + dataset definition for a target column."""
 
@@ -135,9 +158,9 @@ def _load_tft_resources(target: str) -> Tuple[TemporalFusionTransformer, TimeSer
             )
 
         dataset = TimeSeriesDataSet.load(str(ds_path))
+        sanitized_ckpt = _sanitize_checkpoint(target, ckpt_path)
         model = TemporalFusionTransformer.load_from_checkpoint(
-            checkpoint_path=str(ckpt_path),
-            dataset=dataset,
+            checkpoint_path=str(sanitized_ckpt),
             map_location=torch.device("cpu"),
         )
         model.eval()
