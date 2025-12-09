@@ -40,11 +40,8 @@ load_dotenv()
 API_KEY_ENV_VAR = "API_SECRET_KEY"
 ARTIFACT_DIR = Path(__file__).resolve().parent / "artifacts"
 TARGETS = ["ph", "turbidity", "temperature", "do_level"]
-ESP32_BASE_URL = os.getenv("ESP32_BASE_URL", "http://10.232.148.112")
-# Default to the ESP32 firmware's exposed sensor route
-ESP32_DATA_PATH = os.getenv("ESP32_DATA_PATH", "/sensor")
-# Allow bumping the proxy timeout without code changes if the ESP32 is slow to respond
-ESP32_TIMEOUT_SECONDS = float(os.getenv("ESP32_TIMEOUT_SECONDS", "5.0"))
+READ_SENSOR_COMMAND = "read_sensor"
+_pending_read_request: bool = False
 
 _tft_models: Dict[str, TemporalFusionTransformer] = {}
 _tft_datasets: Dict[str, TimeSeriesDataSet] = {}
@@ -515,50 +512,26 @@ def query_lake_dataset(payload: DataQuery, _: None = Depends(verify_api_key)):
     return DataQueryResponse(answer=message)
 
 
-@app.get("/api/esp32/data")
-async def fetch_esp32_data(
-    url_override: Optional[str] = Query(
-        None,
-        description=(
-            "Optional override for the ESP32 sensor URL (e.g., http://10.232.148.112/sensor). "
-            "Use this if the default base URL is unreachable from the server."
-        ),
-    ),
-    timeout_seconds: Optional[float] = Query(
-        None,
-        description="Optional request timeout override in seconds for the ESP32 proxy request.",
-        ge=1.0,
-        le=60.0,
-    ),
-    _: None = Depends(verify_api_key),
-):
-    """Fetch raw JSON data directly from the ESP32 device."""
+class CommandResponse(BaseModel):
+    command: str
 
-    target_url = url_override or f"{ESP32_BASE_URL.rstrip('/')}{ESP32_DATA_PATH if ESP32_DATA_PATH.startswith('/') else '/' + ESP32_DATA_PATH}"
-    timeout = timeout_seconds or ESP32_TIMEOUT_SECONDS
 
-    try:
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            response = await client.get(target_url)
-    except httpx.RequestError as exc:
-        hint = "The ESP32 may be on a private network unreachable from this server. "
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Failed to reach ESP32 at {exc.request.url}: {exc}. {hint}Try setting a publicly reachable URL via the 'url_override' query parameter or ESP32_BASE_URL env var.",
-        )
+@app.post("/api/esp32/request-read")
+def request_esp32_read(_: None = Depends(verify_api_key)):
+    """Signal the ESP32 to take one reading on its next poll."""
 
-    if response.status_code != status.HTTP_200_OK:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=(
-                f"ESP32 responded with status {response.status_code}: {response.text}"
-            ),
-        )
+    global _pending_read_request
+    _pending_read_request = True
+    return {"message": "Sensor read requested"}
 
-    try:
-        return response.json()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="ESP32 response was not valid JSON",
-        )
+
+@app.get("/api/next-command", response_model=CommandResponse)
+def get_next_command(_: None = Depends(verify_api_key)):
+    """ESP32 polls this endpoint; returns a one-time read command when pending."""
+
+    global _pending_read_request
+    if _pending_read_request:
+        _pending_read_request = False
+        return CommandResponse(command=READ_SENSOR_COMMAND)
+
+    return CommandResponse(command="idle")
