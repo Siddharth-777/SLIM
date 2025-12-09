@@ -307,6 +307,32 @@
       }
     };
 
+    const MOCK_TSF = {
+      ph_forecast: {
+        horizon_hours: 12,
+        value: 7.05,
+        rationale: 'Sample outlook while authentication is missing.'
+      },
+      do_forecast: {
+        horizon_hours: 24,
+        value: 5.9,
+        rationale: 'Sample dissolved oxygen projection; add API key for live data.'
+      },
+      turbidity_pattern: {
+        expected_value: 640,
+        rationale: 'Using stored seasonal baseline.'
+      },
+      temperature_spike: {
+        expected_value: 25.4,
+        rationale: 'Mock summer spike; live data requires API key.'
+      },
+      health_index: {
+        next_value: 0.87,
+        trend: 'steady',
+        rationale: 'Composite score based on mock TSF inputs.'
+      }
+    };
+
     let forecastChart;
 
     function setStatus(text, isError = false) {
@@ -419,9 +445,16 @@
           narrative.textContent += ' (Using sample TFT values until artifacts are restored.)';
         }
       } catch (err) {
-        setStatus('TSF endpoint is unavailable right now.', true);
+        const needsKey = err.message.includes('401') || err.message.toLowerCase().includes('api key');
+        if (needsKey) {
+          renderTsf(MOCK_TSF);
+          setStatus('TSF requires an API key — showing sample insights.', true);
+          narrative.textContent = 'Live TSF insights need an API key. Showing sample TSF values alongside the TFT forecast.' + (forecastUsedMock ? ' Sample TFT values shown while artifacts are missing.' : '');
+        } else {
+          setStatus('TSF endpoint is unavailable right now.', true);
+          narrative.textContent = 'TSF hackathon insights could not be loaded. The TFT forecast is displayed above.' + (forecastUsedMock ? ' Sample TFT values shown while artifacts are missing.' : '');
+        }
         errorMsg.textContent = err.message;
-        narrative.textContent = 'TSF hackathon insights could not be loaded. The TFT forecast is displayed above.' + (forecastUsedMock ? ' Sample TFT values shown while artifacts are missing.' : '');
       }
     }
 
