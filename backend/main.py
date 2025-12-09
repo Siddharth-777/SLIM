@@ -20,6 +20,7 @@ from anomaly import (
 
 from clusters import ClusterPatternsResponse, compute_cluster_patterns
 from relationships import RelationshipAnalysisResponse, compute_relationship_insights
+from tsf import TSFForecastResponse, compute_tsf_forecast
 
 
 load_dotenv()
@@ -376,3 +377,12 @@ def get_relationship_analysis(
     """Summarize inter-sensor relationships and lagged effects."""
 
     return compute_relationship_insights()
+
+
+@app.get("/api/tsf", response_model=TSFForecastResponse)
+def get_tsf_forecasts(
+    _: None = Depends(verify_api_key),
+):
+    """Deliver hackathon-friendly time-series forecasts for lake health."""
+
+    return compute_tsf_forecast()
