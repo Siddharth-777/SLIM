@@ -6,6 +6,7 @@ import pandas as pd
 import torch
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
+from groq import Groq
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 from pytorch_forecasting import TimeSeriesDataSet
@@ -52,6 +53,14 @@ class LakeReading(BaseModel):
     turbidity: float
     temperature: float
     do_level: float
+
+
+class DataQuery(BaseModel):
+    question: str = Field(..., description="Question about the lake readings CSV")
+
+
+class DataQueryResponse(BaseModel):
+    answer: str
 
 
 class ForecastResponse(BaseModel):
@@ -115,6 +124,36 @@ def _load_base_dataframe() -> pd.DataFrame:
         df[column] = df[column].interpolate().bfill().ffill()
 
     return df
+
+
+def _format_dataset_summary(df: pd.DataFrame) -> str:
+    """Create a compact textual summary of the lake dataset for LLM prompts."""
+
+    stats = []
+    for col in TARGETS:
+        col_data = df[col]
+        stats.append(
+            f"{col}: min={col_data.min():.2f}, max={col_data.max():.2f}, "
+            f"mean={col_data.mean():.2f}, latest={col_data.iloc[-1]:.2f}"
+        )
+
+    latest_ts = df["timestamp"].iloc[-1].isoformat()
+    return (
+        "Dataset summary for lake readings. "
+        f"Rows: {len(df)}; Time range: {df['timestamp'].min().isoformat()} to {latest_ts}. "
+        f"Columns: {', '.join(TARGETS)}. "
+        "Recent statistics: " + "; ".join(stats)
+    )
+
+
+def _get_groq_client() -> Groq:
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="GROQ_API_KEY is not configured on the server",
+        )
+    return Groq(api_key=api_key)
 
 
 def _sanitize_checkpoint(target: str, ckpt_path: Path) -> Path:
@@ -386,3 +425,47 @@ def get_tsf_forecasts(
     """Deliver hackathon-friendly time-series forecasts for lake health."""
 
     return compute_tsf_forecast()
+
+
+@app.post("/api/data-query", response_model=DataQueryResponse)
+def query_lake_dataset(payload: DataQuery, _: None = Depends(verify_api_key)):
+    """Answer natural language questions about the lake CSV using Groq LLM."""
+
+    df = _load_base_dataframe()
+    dataset_summary = _format_dataset_summary(df)
+    client = _get_groq_client()
+
+    prompt = (
+        "You are an assistant helping with lake sensor analytics. "
+        "Use the provided dataset summary to answer the user's question succinctly. "
+        "If the question is unrelated to the data, politely say you can only answer "
+        "questions about the lake readings."
+    )
+
+    try:
+        completion = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": prompt},
+                {
+                    "role": "user",
+                    "content": f"Dataset summary: {dataset_summary}\nQuestion: {payload.question}",
+                },
+            ],
+            max_tokens=300,
+            temperature=0.2,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Groq request failed: {exc}",
+        )
+
+    message = completion.choices[0].message.content if completion.choices else ""
+    if not message:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Received empty response from Groq",
+        )
+
+    return DataQueryResponse(answer=message)
