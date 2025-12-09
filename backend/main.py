@@ -40,7 +40,7 @@ load_dotenv()
 API_KEY_ENV_VAR = "API_SECRET_KEY"
 ARTIFACT_DIR = Path(__file__).resolve().parent / "artifacts"
 TARGETS = ["ph", "turbidity", "temperature", "do_level"]
-ESP32_BASE_URL = os.getenv("ESP32_BASE_URL", "http://172.16.44.90")
+ESP32_BASE_URL = os.getenv("ESP32_BASE_URL", "http://10.232.148.112")
 # Default to the ESP32 firmware's exposed sensor route
 ESP32_DATA_PATH = os.getenv("ESP32_DATA_PATH", "/sensor")
 
