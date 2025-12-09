@@ -1,6 +1,3 @@
-# anomaly.py
-# ------------ LOGIC ONLY – NO FASTAPI HERE ------------
-
 from pathlib import Path
 from typing import Optional
 
@@ -8,10 +5,6 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel
 from sklearn.ensemble import IsolationForest
-
-# -------------------------------------------------------------------
-# Pydantic models (shared with main.py via import)
-# -------------------------------------------------------------------
 
 
 class LakeInput(BaseModel):
@@ -35,10 +28,6 @@ class FullAnomalyResponse(BaseModel):
     pattern_anomaly: AnomalyResult
 
 
-# -------------------------------------------------------------------
-# Load CSV and train models once at import time
-# -------------------------------------------------------------------
-
 CSV_FILE = Path(__file__).resolve().parent / "sample_lake_readings.csv"
 
 df = pd.read_csv(CSV_FILE)
@@ -54,7 +43,6 @@ if "do_level" in df.columns:
 else:
     do_mean, do_std = None, None
 
-# multivariate training data (ph, turbidity, temperature)
 train_df = df[["ph", "turbidity", "temperature"]].ffill()
 
 ml_model = IsolationForest(
@@ -65,12 +53,9 @@ ml_model = IsolationForest(
 ml_model.fit(train_df)
 
 
-# -------------------------------------------------------------------
-# Internal helpers
-# -------------------------------------------------------------------
-
-
-def _rule_check(value: float, mean: Optional[float], std: Optional[float], name: str) -> AnomalyResult:
+def _rule_check(
+    value: float, mean: Optional[float], std: Optional[float], name: str
+) -> AnomalyResult:
     if mean is None or std is None:
         return AnomalyResult(
             is_anomaly=False,
@@ -111,11 +96,6 @@ def _ml_check(ph: float, turb: float, temp: float) -> bool:
     return bool(ml_model.predict(point)[0] == -1)
 
 
-# -------------------------------------------------------------------
-# Public function called from main.py
-# -------------------------------------------------------------------
-
-
 def analyze_lake_reading(reading: LakeInput) -> FullAnomalyResponse:
     """Run rule-based + ML-based anomaly checks for one reading."""
     ph_res = _rule_check(reading.ph, ph_mean, ph_std, "ph")
@@ -147,6 +127,7 @@ def analyze_lake_reading(reading: LakeInput) -> FullAnomalyResponse:
         pattern_anomaly=pattern_anom,
     )
 
+
 def anomaly_to_row(reading: LakeInput, result: FullAnomalyResponse):
     """Convert anomaly results + raw reading into a DB row."""
     return {
@@ -154,23 +135,18 @@ def anomaly_to_row(reading: LakeInput, result: FullAnomalyResponse):
         "turbidity": reading.turbidity,
         "temperature": reading.temperature,
         "do_level": reading.do_level,
-
         "ph_is_anomaly": result.ph_anomaly.is_anomaly,
         "ph_severity": result.ph_anomaly.severity,
         "ph_reason": result.ph_anomaly.reason,
-
         "turbidity_is_anomaly": result.turbidity_anomaly.is_anomaly,
         "turbidity_severity": result.turbidity_anomaly.severity,
         "turbidity_reason": result.turbidity_anomaly.reason,
-
         "temperature_is_anomaly": result.temperature_anomaly.is_anomaly,
         "temperature_severity": result.temperature_anomaly.severity,
         "temperature_reason": result.temperature_anomaly.reason,
-
         "do_is_anomaly": result.do_anomaly.is_anomaly,
         "do_severity": result.do_anomaly.severity,
         "do_reason": result.do_anomaly.reason,
-
         "pattern_is_anomaly": result.pattern_anomaly.is_anomaly,
         "pattern_severity": result.pattern_anomaly.severity,
         "pattern_reason": result.pattern_anomaly.reason,
