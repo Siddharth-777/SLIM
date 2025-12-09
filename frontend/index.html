@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SLIM AI | Lake Intelligence Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b132b;
+      --surface: #121b35;
+      --muted: #9fb0d1;
+      --primary: #1dd3b0;
+      --primary-dark: #0fa182;
+      --danger: #ff7b7b;
+      --warning: #f9c74f;
+      --safe: #69db7c;
+      --white: #f7f9fc;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at 20% 20%, rgba(29, 211, 176, 0.12), transparent 35%),
+        radial-gradient(circle at 80% 10%, rgba(249, 199, 79, 0.15), transparent 32%),
+        linear-gradient(135deg, #0b132b 0%, #0f1a3b 100%);
+      color: var(--white);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+      background: rgba(11, 19, 43, 0.85);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 24px;
+    }
+
+    .logo {
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo span {
+      background: linear-gradient(120deg, var(--primary), #4dd6ff);
+      color: #0b132b;
+      padding: 6px 10px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      box-shadow: 0 6px 20px rgba(29, 211, 176, 0.35);
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 14px;
+      margin: 0;
+      padding: 0;
+    }
+
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-weight: 600;
+      padding: 10px 14px;
+      border-radius: 12px;
+      transition: color 0.2s ease, background 0.2s ease;
+    }
+
+    nav a:hover,
+    nav a.active {
+      color: var(--white);
+      background: rgba(29, 211, 176, 0.12);
+    }
+
+    .hero {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 96px 24px 64px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 48px;
+      align-items: center;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.2rem, 4vw, 3rem);
+      margin: 0 0 16px;
+      line-height: 1.2;
+    }
+
+    .hero p { color: var(--muted); margin: 0 0 24px; }
+
+    .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      border: 1px solid transparent;
+    }
+
+    .button.primary {
+      background: linear-gradient(120deg, var(--primary), var(--primary-dark));
+      color: #0b132b;
+      box-shadow: 0 12px 30px rgba(29, 211, 176, 0.35);
+    }
+
+    .button.secondary {
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: var(--white);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .button:hover { transform: translateY(-1px); }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .stat-card {
+      padding: 16px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; font-weight: 700; font-size: 0.8rem; }
+    .pill.green { background: rgba(105, 219, 124, 0.16); color: var(--safe); }
+    .pill.gold { background: rgba(249, 199, 79, 0.14); color: var(--warning); }
+    .pill.red { background: rgba(255, 123, 123, 0.16); color: var(--danger); }
+
+    section { padding: 60px 24px; }
+
+    .section-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 1.6rem;
+    }
+
+    .section-subtitle { color: var(--muted); margin: 0 0 32px; }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      padding: 18px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(29, 211, 176, 0.08), rgba(77, 214, 255, 0.06));
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+    }
+
+    .card:hover::after { opacity: 1; }
+    .card h3 { margin: 0 0 10px; }
+    .card p { margin: 0; color: var(--muted); }
+
+    .timeline { display: grid; gap: 16px; }
+    .timeline-item {
+      padding: 16px;
+      border-left: 3px solid var(--primary);
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+    }
+
+    .cta {
+      text-align: center;
+      padding: 64px 24px 80px;
+      background: radial-gradient(circle at 50% 0%, rgba(29, 211, 176, 0.18), transparent 50%);
+    }
+
+    .cta-box {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 32px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .tabs-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .tab {
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .tab:hover, .tab.active {
+      color: var(--white);
+      border-color: rgba(29, 211, 176, 0.7);
+      box-shadow: 0 8px 24px rgba(29, 211, 176, 0.18);
+    }
+
+    footer {
+      padding: 28px 24px;
+      color: var(--muted);
+      text-align: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(11, 19, 43, 0.9);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav">
+      <div class="logo">SLIM AI <span>Lake Intelligence</span></div>
+      <nav>
+        <ul>
+          <li><a class="active" href="#prediction">Prediction</a></li>
+          <li><a href="#dashboard">Dashboard</a></li>
+          <li><a href="#anomaly">Anomaly</a></li>
+          <li><a href="#research">Research</a></li>
+          <li><a href="#simulation">Simulation</a></li>
+          <li><a href="#alerts">Alerts</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <p class="pill green">Trusted by lake operators and urban planners</p>
+        <h1>Predict. Detect. Act.<br/> A complete lake intelligence platform.</h1>
+        <p>SLIM AI fuses IoT sensing, time-series forecasting, anomaly triage, and digital twin simulations to keep urban lakes healthy. Deploy once, gain real-time clarity on water quality, emerging threats, and next-best actions.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#dashboard">Explore the experience</a>
+          <a class="button secondary" href="#research">See the science</a>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="pill gold">Live telemetry</div>
+            <h3>Real-time ingestion</h3>
+            <p>pH, turbidity, temperature, and dissolved oxygen streamed securely via FastAPI + Supabase.</p>
+          </div>
+          <div class="stat-card">
+            <div class="pill green">Predictive</div>
+            <h3>Temporal Fusion forecasts</h3>
+            <p>ML-driven time-series projections for the next intervals using TFT checkpoints per signal.</p>
+          </div>
+          <div class="stat-card">
+            <div class="pill red">Rapid response</div>
+            <h3>Alerts with context</h3>
+            <p>Instant notifications and labeled risk narratives for polluted inflows, rainfall turbidity, and aerator outages.</p>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08);">
+        <h3>API highlights</h3>
+        <div class="tabs-bar">
+          <span class="tab active">Prediction</span>
+          <span class="tab">Dashboard</span>
+          <span class="tab">Anomaly</span>
+          <span class="tab">Research</span>
+          <span class="tab">Simulation</span>
+          <span class="tab">Alerts</span>
+        </div>
+        <div class="timeline">
+          <div class="timeline-item">
+            <strong>Forecast</strong> — `POST /api/forecast` returns next-interval water quality predictions and structured metadata per target column.
+          </div>
+          <div class="timeline-item">
+            <strong>Dashboards</strong> — `GET /api/lake-data/history` hydrates live charts with denoised, interpolated sensor streams and rolling stats.
+          </div>
+          <div class="timeline-item">
+            <strong>Anomaly insights</strong> — `POST /api/analyze` adds root-cause hypotheses and remediation tips alongside anomaly scores.
+          </div>
+          <div class="timeline-item">
+            <strong>Digital twin</strong> — `POST /api/digital-twin` simulates warming spikes, pollution slugs, and rainfall recovery scenarios for planning.
+          </div>
+          <div class="timeline-item">
+            <strong>Alerts & events</strong> — `POST /api/event-detection` classifies polluted inflow, rain-driven turbidity, and aerator risks with urgency levels.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="prediction">
+      <div class="section-inner">
+        <h2 class="section-title">Prediction</h2>
+        <p class="section-subtitle">Temporal Fusion Transformers forecast the next readings for pH, turbidity, temperature, and dissolved oxygen so teams can act ahead of critical thresholds.</p>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Signal-aware checkpoints</h3>
+            <p>Dedicated TFT checkpoints per sensor stream keep forecasts tailored to each characteristic while sharing common dataset normalization.</p>
+          </div>
+          <div class="card">
+            <h3>CSV + live blend</h3>
+            <p>History is hydrated from Supabase while backfilling from local CSV archives, ensuring continuity even if connectivity blips occur.</p>
+          </div>
+          <div class="card">
+            <h3>Readable outputs</h3>
+            <p>Responses return ISO8601 timestamps plus a full LakeReading payload, making it simple to populate dashboards or trigger workflows.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="dashboard">
+      <div class="section-inner">
+        <h2 class="section-title">Prediction dashboard</h2>
+        <p class="section-subtitle">Live tiles, rolling averages, and correlation callouts give stakeholders a real-time pulse on lake health.</p>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Live ingestion</h3>
+            <p>Continuous `POST /api/lake-data` writes to Supabase with API-key validation and resilient caching of the client session.</p>
+          </div>
+          <div class="card">
+            <h3>Flexible queries</h3>
+            <p>`GET /api/lake-data/latest` and `GET /api/lake-data/history` power tiles, trends, and drill-downs without extra ETL.</p>
+          </div>
+          <div class="card">
+            <h3>Storytelling analytics</h3>
+            <p>`POST /api/data-query` pairs Groq LLM reasoning with dataset statistics to narrate patterns in natural language.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="anomaly">
+      <div class="section-inner">
+        <h2 class="section-title">Anomaly detection</h2>
+        <p class="section-subtitle">Tri-layer anomaly checks blend edge screening, ML heuristics, and advisory context to cut through noise.</p>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Structured response</h3>
+            <p>`POST /api/analyze` returns severity, narrative context, and recommended mitigations alongside the raw anomaly score.</p>
+          </div>
+          <div class="card">
+            <h3>Context-rich triage</h3>
+            <p>Feature-driven heuristics highlight likely drivers (sewage inflow, aerator failure, rainfall) to focus operator attention.</p>
+          </div>
+          <div class="card">
+            <h3>Interoperable by design</h3>
+            <p>JSON payloads mirror the LakeReading schema, simplifying how dashboards overlay alerts on live streams.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="research">
+      <div class="section-inner">
+        <h2 class="section-title">Anomaly research</h2>
+        <p class="section-subtitle">Exploratory modeling endpoints accelerate hypothesis testing and model comparison.</p>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Clustering patterns</h3>
+            <p>`POST /api/clusters` surfaces centroids and segments, revealing recurring profiles such as clear mornings vs. post-rain spikes.</p>
+          </div>
+          <div class="card">
+            <h3>Relationship insights</h3>
+            <p>`POST /api/relationships` quantifies how features co-move, enabling policy simulations for aeration, inflow diversion, or dosing.</p>
+          </div>
+          <div class="card">
+            <h3>Research models</h3>
+            <p>`POST /api/research-models` compares classic baselines to generative signals, returning metrics ready for executive readouts.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="simulation">
+      <div class="section-inner">
+        <h2 class="section-title">Digital twin simulation</h2>
+        <p class="section-subtitle">Simulate pollution slugs, warming spikes, and rainfall-driven turbidity recovery to test interventions before rolling them out.</p>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Scenario library</h3>
+            <p>`POST /api/digital-twin` accepts pollution intensity, rain strength, and recovery rate to project different what-if pathways.</p>
+          </div>
+          <div class="card">
+            <h3>Transparent curves</h3>
+            <p>Outputs include time-indexed trajectories for turbidity and DO, perfect for overlaying on operational dashboards.</p>
+          </div>
+          <div class="card">
+            <h3>Actionable summaries</h3>
+            <p>Each scenario ships with short narratives explaining operational risk, remediation options, and projected stabilization times.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="alerts">
+      <div class="section-inner">
+        <h2 class="section-title">Alerts & event detection</h2>
+        <p class="section-subtitle">Human-readable alerts ensure teams know what happened, why it matters, and how to respond.</p>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Label-free checks</h3>
+            <p>`POST /api/event-detection` identifies polluted inflows, rain turbidity, and aerator risks using contextual thresholds instead of labels.</p>
+          </div>
+          <div class="card">
+            <h3>Severity tagging</h3>
+            <p>Each alert carries an urgency label and supporting evidence so incident commanders can triage faster.</p>
+          </div>
+          <div class="card">
+            <h3>Secure logging</h3>
+            <p>Supabase-backed storage plus optional blockchain integrity layers keep event timelines auditable end-to-end.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta">
+      <div class="cta-box">
+        <p class="pill gold">Ready to deploy</p>
+        <h2>Bring SLIM AI to your lake in days, not months.</h2>
+        <p style="color: var(--muted);">Provision the FastAPI backend, point your sensors to the ingestion endpoint, and unlock live dashboards, predictive insights, and automated alerts with minimal setup.</p>
+        <div class="hero-actions" style="justify-content: center;">
+          <a class="button primary" href="mailto:hello@slim.ai">Schedule a demo</a>
+          <a class="button secondary" href="https://github.com/" target="_blank" rel="noopener">View technical docs</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    © 2024 SLIM AI — Smart Lake Intelligence and Monitoring. Built for resilient, data-driven water stewardship.
+  </footer>
+</body>
+</html>
