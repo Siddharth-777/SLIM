@@ -82,6 +82,7 @@ Once running, the interactive API docs (Swagger UI) are available at `http://loc
 - `POST /api/lake-data` – ingest a reading after validating the `x-api-key` header
 - `GET /api/lake-data/latest` – fetch the most recent reading
 - `GET /api/lake-data/history?limit=100` – fetch the latest N readings (default 100, max 500)
+- `POST /api/data-query` – answer natural-language questions about the lake CSV via the Groq LLM
 
 Example POST payload with header:
 ```bash
@@ -93,6 +94,16 @@ curl -X POST "http://localhost:8000/api/lake-data" \
         "turbidity": 560,
         "temperature": 26.4,
         "do_level": 300
+      }'
+```
+
+Sample Groq-backed query using the same API key:
+```bash
+curl -X POST "http://localhost:8000/api/data-query" \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: MY_SECRET_KEY" \
+  -d '{
+        "question": "What are the recent average turbidity levels and are they trending up?"
       }'
 ```
 
