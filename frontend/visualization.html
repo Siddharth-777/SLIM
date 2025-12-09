@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html data-wf-domain="bk-fwd-tricky-knot.webflow.io" data-wf-page="64f5a7183432d6a16cba314b" data-wf-site="64f5a7183432d6a16cba314d">
+<head>
+<meta charset="utf-8">
+<title>Visualization - Smart Lake Monitoring System</title>
+<meta content="Visualization - Smart Lake Monitoring System" property="og:title">
+<meta content="width=device-width, initial-scale=1" name="viewport">
+<link href="css/bk-fwd-tricky-knot.webflow.shared.c9d24af5e.css" rel="stylesheet" type="text/css">
+<style>
+  html { background: #082741; scroll-behavior: smooth; }
+  body { margin: 0; padding: 0; font-family: 'acumin-pro', sans-serif; color: #fff; background: #082741; }
+  .container { max-width: 1400px; margin: 0 auto; padding: 80px 40px; }
+  .header { text-align: center; margin-bottom: 60px; }
+  .title { font-family: 'IvarHeadline', serif; font-size: 52px; font-weight: 600; font-style: italic; color: #fff; margin-bottom: 20px; }
+  .subtitle { font-size: 18px; color: rgba(255, 255, 255, 0.7); max-width: 700px; margin: 0 auto; line-height: 1.6; }
+  .back-button { display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #84A0EA, #FFF06B); color: #082741; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 14px; transition: transform 0.3s ease; margin-bottom: 40px; }
+  .back-button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(132, 160, 234, 0.4); }
+  .card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 30px; backdrop-filter: blur(10px); margin-bottom: 30px; }
+  .card-title { font-family: 'IvarHeadline', serif; font-size: 24px; font-style: italic; margin-bottom: 20px; color: #fff; }
+  .heatmap-placeholder { width: 100%; height: 400px; background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(251, 191, 36, 0.3), rgba(74, 222, 128, 0.3)); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; margin: 20px 0; position: relative; }
+  .legend { display: flex; justify-content: center; gap: 30px; margin-top: 20px; }
+  .legend-item { display: flex; align-items: center; gap: 10px; }
+  .legend-color { width: 30px; height: 30px; border-radius: 6px; }
+  .color-safe { background: #4ade80; }
+  .color-caution { background: #fbbf24; }
+  .color-critical { background: #ef4444; }
+  .info-text { color: rgba(255, 255, 255, 0.7); line-height: 1.6; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+  @media (max-width: 768px) { .container { padding: 40px 20px; } .title { font-size: 36px; } .heatmap-placeholder { height: 300px; } }
+</style>
+</head>
+<body>
+  <div class="container">
+    <a href="index.html" class="back-button">← Back to Home</a>
+    <div class="header">
+      <h1 class="title">Heatmaps & Spatial Visualization</h1>
+      <p class="subtitle">Color-coded geospatial mapping showing safe, caution, and critical water quality zones across the lake</p>
+    </div>
+    
+    <div class="card">
+      <h3 class="card-title">Live Lake Heatmap</h3>
+      <div class="heatmap-placeholder">
+        <div style="text-align: center;">
+          <div style="font-size: 24px; font-weight: 600; margin-bottom: 10px;">Interactive Geospatial Heatmap</div>
+          <div style="font-size: 14px; opacity: 0.7;">Real-time water quality zones with node-based coloring</div>
+        </div>
+      </div>
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-color color-safe"></div>
+          <span>Safe Zone</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color color-caution"></div>
+          <span>Caution Zone</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color color-critical"></div>
+          <span>Critical Zone</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="grid">
+      <div class="card">
+        <h3 class="card-title">Zone Analysis</h3>
+        <div class="info-text">
+          <p><strong>Safe Zones:</strong> 78% of lake area</p>
+          <p><strong>Caution Zones:</strong> 18% of lake area</p>
+          <p><strong>Critical Zones:</strong> 4% of lake area</p>
+          <p style="margin-top: 20px;">Zone classification is based on real-time pH, turbidity, temperature, and dissolved oxygen levels from all sensor nodes.</p>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3 class="card-title">Node Distribution</h3>
+        <div class="info-text">
+          <p><strong>Node 1 (North):</strong> Safe - pH 7.2, Temp 24.5°C</p>
+          <p><strong>Node 2 (East):</strong> Caution - Temp spike detected</p>
+          <p><strong>Node 3 (South):</strong> Critical - High turbidity</p>
+          <p><strong>Node 4 (West):</strong> Safe - All parameters normal</p>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3 class="card-title">Historical Playback</h3>
+        <div class="info-text">
+          <p>View how water quality zones have changed over time with our historical visualization playback feature.</p>
+          <p style="margin-top: 15px;"><strong>Available Timeframes:</strong></p>
+          <ul style="margin-top: 10px;">
+            <li>Last 24 hours</li>
+            <li>Last 7 days</li>
+            <li>Last 30 days</li>
+            <li>Custom date range</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card" style="text-align: center;">
+      <h3 class="card-title">Integration Capabilities</h3>
+      <p class="info-text">Our visualization system can integrate with GIS platforms, mapping libraries (Leaflet, Mapbox, Folium), and custom dashboards to provide stunning geospatial insights.</p>
+      <a href="index.html" class="back-button">Return to Homepage</a>
+    </div>
+  </div>
+</body>
+</html>

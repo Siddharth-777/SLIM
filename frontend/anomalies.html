@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Anomaly Detection - Smart Lake Monitoring System</title>
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <link href="css/bk-fwd-tricky-knot.webflow.shared.c9d24af5e.css" rel="stylesheet" type="text/css">
+    <link href="images/favicon.ico" rel="shortcut icon" type="image/x-icon">
+    <style>
+        html, body {
+            background: #082741;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding-top: 40px;
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-family: 'acumin-pro', sans-serif;
+            font-size: 14px;
+            margin-bottom: 30px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #fff;
+        }
+        
+        .page-title {
+            font-family: 'IvarHeadline', Georgia, serif;
+            font-size: 48px;
+            font-weight: 600;
+            font-style: italic;
+            color: #fff;
+            margin: 0 0 20px;
+        }
+        
+        .page-subtitle {
+            font-family: 'acumin-pro', sans-serif;
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.7);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .anomaly-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-family: 'acumin-pro', sans-serif;
+            font-size: 36px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-family: 'acumin-pro', sans-serif;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .stat-critical .stat-number {
+            color: #F44336;
+        }
+        
+        .stat-warning .stat-number {
+            color: #FFC107;
+        }
+        
+        .stat-resolved .stat-number {
+            color: #4CAF50;
+        }
+        
+        .anomaly-list {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        
+        .list-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .list-title {
+            font-family: 'IvarHeadline', Georgia, serif;
+            font-size: 22px;
+            font-style: italic;
+            color: #fff;
+            margin: 0;
+        }
+        
+        .anomaly-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            padding: 25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.3s ease;
+        }
+        
+        .anomaly-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        
+        .anomaly-item:last-child {
+            border-bottom: none;
+        }
+        
+        .severity-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-top: 5px;
+            flex-shrink: 0;
+        }
+        
+        .severity-high {
+            background: #F44336;
+            box-shadow: 0 0 10px rgba(244, 67, 54, 0.5);
+        }
+        
+        .severity-medium {
+            background: #FFC107;
+            box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+        }
+        
+        .severity-low {
+            background: #4CAF50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+        
+        .anomaly-content {
+            flex: 1;
+        }
+        
+        .anomaly-title {
+            font-family: 'acumin-pro', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            margin: 0 0 8px;
+        }
+        
+        .anomaly-description {
+            font-family: 'acumin-pro', sans-serif;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            margin: 0 0 10px;
+            line-height: 1.5;
+        }
+        
+        .anomaly-meta {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .meta-item {
+            font-family: 'acumin-pro', sans-serif;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .anomaly-action {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            color: #fff;
+            font-family: 'acumin-pro', sans-serif;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .anomaly-action:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 32px;
+            }
+            
+            .anomaly-item {
+                flex-direction: column;
+            }
+            
+            .anomaly-action {
+                align-self: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="page-header">
+            <a href="index.html" class="back-link">← Back to Home</a>
+            <h1 class="page-title">AI-Based Anomaly Detection</h1>
+            <p class="page-subtitle">Track unusual spikes and environmental risks detected by our machine learning models.</p>
+        </div>
+        
+        <div class="anomaly-stats">
+            <div class="stat-card stat-critical">
+                <div class="stat-number">3</div>
+                <div class="stat-label">Critical Anomalies</div>
+            </div>
+            <div class="stat-card stat-warning">
+                <div class="stat-number">7</div>
+                <div class="stat-label">Warnings</div>
+            </div>
+            <div class="stat-card stat-resolved">
+                <div class="stat-number">24</div>
+                <div class="stat-label">Resolved (7 days)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">156</div>
+                <div class="stat-label">Total Events</div>
+            </div>
+        </div>
+        
+        <div class="anomaly-list">
+            <div class="list-header">
+                <h3 class="list-title">Recent Anomalies</h3>
+            </div>
+            
+            <div class="anomaly-item">
+                <div class="severity-indicator severity-high"></div>
+                <div class="anomaly-content">
+                    <h4 class="anomaly-title">Sudden Turbidity Spike Detected</h4>
+                    <p class="anomaly-description">Turbidity levels increased by 340% within 2 hours at Node 3 (South Bay). Possible sediment disturbance or runoff event detected.</p>
+                    <div class="anomaly-meta">
+                        <span class="meta-item">📍 Node 3 - South Bay</span>
+                        <span class="meta-item">🕐 2 hours ago</span>
+                        <span class="meta-item">📊 Current: 285 NTU</span>
+                    </div>
+                </div>
+                <a href="#" class="anomaly-action">View Details</a>
+            </div>
+            
+            <div class="anomaly-item">
+                <div class="severity-indicator severity-high"></div>
+                <div class="anomaly-content">
+                    <h4 class="anomaly-title">pH Level Critical Drop</h4>
+                    <p class="anomaly-description">pH dropped below safe threshold (6.5) at Node 1. Acidification risk detected - requires immediate attention.</p>
+                    <div class="anomaly-meta">
+                        <span class="meta-item">📍 Node 1 - North Shore</span>
+                        <span class="meta-item">🕐 5 hours ago</span>
+                        <span class="meta-item">📊 Current: 5.8 pH</span>
+                    </div>
+                </div>
+                <a href="#" class="anomaly-action">View Details</a>
+            </div>
+            
+            <div class="anomaly-item">
+                <div class="severity-indicator severity-medium"></div>
+                <div class="anomaly-content">
+                    <h4 class="anomaly-title">Temperature Anomaly Warning</h4>
+                    <p class="anomaly-description">Water temperature elevated above seasonal average by 4.2°C. Potential thermal stress for aquatic life.</p>
+                    <div class="anomaly-meta">
+                        <span class="meta-item">📍 Node 2 - Central Lake</span>
+                        <span class="meta-item">🕐 8 hours ago</span>
+                        <span class="meta-item">📊 Current: 28.7°C</span>
+                    </div>
+                </div>
+                <a href="#" class="anomaly-action">View Details</a>
+            </div>
+            
+            <div class="anomaly-item">
+                <div class="severity-indicator severity-medium"></div>
+                <div class="anomaly-content">
+                    <h4 class="anomaly-title">Unusual Pattern Detected</h4>
+                    <p class="anomaly-description">AI model detected unusual correlation between turbidity and temperature patterns suggesting possible algal activity.</p>
+                    <div class="anomaly-meta">
+                        <span class="meta-item">📍 Node 5 - West Outlet</span>
+                        <span class="meta-item">🕐 1 day ago</span>
+                        <span class="meta-item">📊 Confidence: 87%</span>
+                    </div>
+                </div>
+                <a href="#" class="anomaly-action">View Details</a>
+            </div>
+            
+            <div class="anomaly-item">
+                <div class="severity-indicator severity-low"></div>
+                <div class="anomaly-content">
+                    <h4 class="anomaly-title">Minor pH Fluctuation (Resolved)</h4>
+                    <p class="anomaly-description">Brief pH fluctuation detected and returned to normal within 30 minutes. No intervention required.</p>
+                    <div class="anomaly-meta">
+                        <span class="meta-item">📍 Node 2 - Central Lake</span>
+                        <span class="meta-item">🕐 2 days ago</span>
+                        <span class="meta-item">✅ Auto-resolved</span>
+                    </div>
+                </div>
+                <a href="#" class="anomaly-action">View Details</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

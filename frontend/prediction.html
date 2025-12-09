@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Prediction - Smart Lake Monitoring System</title>
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <link href="css/bk-fwd-tricky-knot.webflow.shared.c9d24af5e.css" rel="stylesheet" type="text/css">
+    <link href="images/favicon.ico" rel="shortcut icon" type="image/x-icon">
+    <style>
+        html, body {
+            background: #082741;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding-top: 40px;
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-family: 'acumin-pro', sans-serif;
+            font-size: 14px;
+            margin-bottom: 30px;
+            transition: color 0.3s ease;
+        }
+        
+        .back-link:hover {
+            color: #fff;
+        }
+        
+        .page-title {
+            font-family: 'IvarHeadline', Georgia, serif;
+            font-size: 48px;
+            font-weight: 600;
+            font-style: italic;
+            color: #fff;
+            margin: 0 0 20px;
+        }
+        
+        .page-subtitle {
+            font-family: 'acumin-pro', sans-serif;
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.7);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .prediction-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+        
+        .prediction-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 30px;
+            transition: transform 0.3s ease;
+        }
+        
+        .prediction-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+        }
+        
+        .card-title {
+            font-family: 'IvarHeadline', Georgia, serif;
+            font-size: 22px;
+            font-style: italic;
+            color: #fff;
+            margin: 0;
+        }
+        
+        .card-timeframe {
+            padding: 6px 12px;
+            background: rgba(132, 160, 234, 0.2);
+            border-radius: 20px;
+            font-family: 'acumin-pro', sans-serif;
+            font-size: 12px;
+            color: #84A0EA;
+        }
+        
+        .forecast-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .forecast-row:last-child {
+            border-bottom: none;
+        }
+        
+        .forecast-label {
+            font-family: 'acumin-pro', sans-serif;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .forecast-value {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .forecast-number {
+            font-family: 'acumin-pro', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .trend-up {
+            color: #F44336;
+        }
+        
+        .trend-down {
+            color: #4CAF50;
+        }
+        
+        .trend-stable {
+            color: #FFC107;
+        }
+        
+        .trend-indicator {
+            font-size: 14px;
+        }
+        
+        .confidence-bar {
+            margin-top: 20px;
+        }
+        
+        .confidence-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .confidence-text {
+            font-family: 'acumin-pro', sans-serif;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .confidence-track {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #84A0EA, #FFF06B);
+            border-radius: 3px;
+        }
+        
+        .model-info {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 30px;
+        }
+        
+        .model-title {
+            font-family: 'IvarHeadline', Georgia, serif;
+            font-size: 24px;
+            font-style: italic;
+            color: #fff;
+            margin: 0 0 25px;
+        }
+        
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 25px;
+        }
+        
+        .model-stat {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+        }
+        
+        .model-stat-value {
+            font-family: 'acumin-pro', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+        
+        .model-stat-label {
+            font-family: 'acumin-pro', sans-serif;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .risk-section {
+            margin-top: 50px;
+            background: linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(255, 193, 7, 0.1) 100%);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 16px;
+            padding: 30px;
+        }
+        
+        .risk-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .risk-icon {
+            font-size: 24px;
+        }
+        
+        .risk-title {
+            font-family: 'IvarHeadline', Georgia, serif;
+            font-size: 22px;
+            font-style: italic;
+            color: #FFC107;
+            margin: 0;
+        }
+        
+        .risk-description {
+            font-family: 'acumin-pro', sans-serif;
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+            margin: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 32px;
+            }
+            
+            .prediction-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="page-header">
+            <a href="index.html" class="back-link">← Back to Home</a>
+            <h1 class="page-title">Predictive Environmental Insights</h1>
+            <p class="page-subtitle">AI-powered forecasting for lake conditions using machine learning models and trend analysis.</p>
+        </div>
+        
+        <div class="prediction-grid">
+            <div class="prediction-card">
+                <div class="card-header">
+                    <h3 class="card-title">pH Level Forecast</h3>
+                    <span class="card-timeframe">Next 24 Hours</span>
+                </div>
+                <div class="forecast-row">
+                    <span class="forecast-label">Current</span>
+                    <div class="forecast-value">
+                        <span class="forecast-number">7.2</span>
+                    </div>
+                </div>
+                <div class="forecast-row">
+                    <span class="forecast-label">+6 Hours</span>
+                    <div class="forecast-value">
+                        <span class="forecast-number">7.1</span>
+                        <span class="trend-indicator trend-down">↓ 0.1</span>
+                    </div>
+                </div>
+                <div class="forecast-row">
+                    <span class="forecast-label">+12 Hours</span>
+                    <div class="forecast-value">
+                        <span class="forecast-number">7.0</span>
+                        <span class="trend-indicator trend-down">↓ 0.2</span>
+                    </div>
+                </div>
+                <div class="forecast-row">
+                    <span class="forecast-label">+24 Hours</span>
+                    <div class="forecast-value">
+                        <span class="forecast-number">7.1</span>
+                        <span class="trend-indicator trend-stable">→ 0.1</span>
+                    </div>
+                </div>
+                <div class="confidence-bar">
+                    <div class="confidence-label">
+                        <span class="confidence-text">Model Confidence</span>
+                        <span class="confidence-text">92%</span>
+                    </div>
+                    <div class="confidence-track">
+                        <div class="confidence-fill" style="width: 92%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="prediction-card">
+                <div class="card-header">
+                    <h3 class="card-title">Turbidity Forecast</h3>
+                    <span class="card-timeframe">Next 24 Hours</span>
+                </div>
+                <div class="forecast-row">
+                    <span class="forecast-label">Current</span>
+                    <div class="forecast-value">
+                        <span class="forecast-number">85 NTU</span>
+                    </div>
+                </div>
+                <div class="forecast-row">
+                    <span class="forecast-label">+6 Hours</span>
+                    <div class="forecast-value">
+                        <span class="forecast-number">92 NTU</span>
+                        <span class="trend-indicator trend-up">↑ 7</span>
+                    </div>
+                </div>
+                <div class="forecast-row">
+                    <span class="forecast-label">+12 Hours</span>
+                    <div class="forecast-value">
+                        <span class="forecast-number">78 NTU</span>
+                        <span class="trend-indicator trend-down">↓ 14</span>
+                    </div>
+                </div>
+                <div class="forecast-row">
+                    <span class="forecast-label">+24 Hours</span>
+                    <div class="forecast-value">
+                        <span class="forecast-number">65 NTU</span>
+                        <span class="trend-indicator trend-down">↓ 13</span>
+                    </div>
+                </div>
+                <div class="confidence-bar">
+                    <div class="confidence-label">
+                        <span class="confidence-text">Model Confidence</span>
+                        <span class="confidence-text">87%</span>
+                    </div>
+                    <div class="confidence-track">
+                        <div class="confidence-fill" style="width: 87%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="prediction-card">
+                <div class="card-header">
+                    <h3 class="card-title">Temperature Forecast</h3>
+                    <span class="card-timeframe">Next 24 Hours</span>
+                </div>
+                <div class="forecast-row">
+                    <span class="forecast-label">Current</span>
+                    <div class="forecast-value">
+                        <span class="forecast-number">24.5°C</span>
+                    </div>
+                </div>
+                <div class="forecast-row">
+                    <span class="forecast-label">+6 Hours</span>
+                    <div class="forecast-value">
+                        <span class="forecast-number">26.2°C</span>
+                        <span class="trend-indicator trend-up">↑ 1.7</span>
+                    </div>
+                </div>
+                <div class="forecast-row">
+                    <span class="forecast-label">+12 Hours</span>
+                    <div class="forecast-value">
+                        <span class="forecast-number">23.8°C</span>
+                        <span class="trend-indicator trend-down">↓ 2.4</span>
+                    </div>
+                </div>
+                <div class="forecast-row">
+                    <span class="forecast-label">+24 Hours</span>
+                    <div class="forecast-value">
+                        <span class="forecast-number">25.1°C</span>
+                        <span class="trend-indicator trend-up">↑ 1.3</span>
+                    </div>
+                </div>
+                <div class="confidence-bar">
+                    <div class="confidence-label">
+                        <span class="confidence-text">Model Confidence</span>
+                        <span class="confidence-text">95%</span>
+                    </div>
+                    <div class="confidence-track">
+                        <div class="confidence-fill" style="width: 95%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="model-info">
+            <h3 class="model-title">AI Model Performance</h3>
+            <div class="model-grid">
+                <div class="model-stat">
+                    <div class="model-stat-value">94.2%</div>
+                    <div class="model-stat-label">Overall Accuracy</div>
+                </div>
+                <div class="model-stat">
+                    <div class="model-stat-value">LSTM</div>
+                    <div class="model-stat-label">Model Type</div>
+                </div>
+                <div class="model-stat">
+                    <div class="model-stat-value">45K+</div>
+                    <div class="model-stat-label">Training Data Points</div>
+                </div>
+                <div class="model-stat">
+                    <div class="model-stat-value">2.3s</div>
+                    <div class="model-stat-label">Avg. Inference Time</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="risk-section">
+            <div class="risk-header">
+                <span class="risk-icon">⚠️</span>
+                <h3 class="risk-title">Upcoming Risk Alert</h3>
+            </div>
+            <p class="risk-description">
+                Based on current weather patterns and historical data, our model predicts a potential turbidity spike in the next 48-72 hours due to expected rainfall in the catchment area. Recommended action: Increase monitoring frequency at Nodes 3 and 5.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
