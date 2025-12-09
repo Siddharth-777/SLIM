@@ -57,3 +57,4 @@ nunit-*.xml
 venv312
 __pycache__
 checkpoints
+lightning_logs
