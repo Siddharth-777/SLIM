@@ -28,6 +28,8 @@ load_dotenv()
 API_KEY_ENV_VAR = "API_SECRET_KEY"
 ARTIFACT_DIR = Path(__file__).resolve().parent / "artifacts"
 TARGETS = ["ph", "turbidity", "temperature", "do_level"]
+READ_SENSOR_COMMAND = "read_sensor"
+_pending_read_request: bool = False
 
 _tft_models: Dict[str, TemporalFusionTransformer] = {}
 _tft_datasets: Dict[str, TimeSeriesDataSet] = {}
@@ -469,3 +471,28 @@ def query_lake_dataset(payload: DataQuery, _: None = Depends(verify_api_key)):
         )
 
     return DataQueryResponse(answer=message)
+
+
+class CommandResponse(BaseModel):
+    command: str
+
+
+@app.post("/api/esp32/request-read")
+def request_esp32_read(_: None = Depends(verify_api_key)):
+    """Signal the ESP32 to take one reading on its next poll."""
+
+    global _pending_read_request
+    _pending_read_request = True
+    return {"message": "Sensor read requested"}
+
+
+@app.get("/api/next-command", response_model=CommandResponse)
+def get_next_command(_: None = Depends(verify_api_key)):
+    """ESP32 polls this endpoint; returns a one-time read command when pending."""
+
+    global _pending_read_request
+    if _pending_read_request:
+        _pending_read_request = False
+        return CommandResponse(command=READ_SENSOR_COMMAND)
+
+    return CommandResponse(command="idle")
