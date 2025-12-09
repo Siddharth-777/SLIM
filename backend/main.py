@@ -6,6 +6,7 @@ import pandas as pd
 import torch
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
+import httpx
 from groq import Groq
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
@@ -28,6 +29,7 @@ load_dotenv()
 API_KEY_ENV_VAR = "API_SECRET_KEY"
 ARTIFACT_DIR = Path(__file__).resolve().parent / "artifacts"
 TARGETS = ["ph", "turbidity", "temperature", "do_level"]
+ESP32_BASE_URL = os.getenv("ESP32_BASE_URL", "http://172.16.44.90")
 
 _tft_models: Dict[str, TemporalFusionTransformer] = {}
 _tft_datasets: Dict[str, TimeSeriesDataSet] = {}
@@ -469,3 +471,35 @@ def query_lake_dataset(payload: DataQuery, _: None = Depends(verify_api_key)):
         )
 
     return DataQueryResponse(answer=message)
+
+
+@app.get("/api/esp32/data")
+async def fetch_esp32_data(_: None = Depends(verify_api_key)):
+    """Fetch raw JSON data directly from the ESP32 device."""
+
+    target_url = ESP32_BASE_URL.rstrip("/")
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get(target_url)
+    except httpx.RequestError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to reach ESP32 at {exc.request.url}: {exc}",
+        )
+
+    if response.status_code != status.HTTP_200_OK:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=(
+                f"ESP32 responded with status {response.status_code}: {response.text}"
+            ),
+        )
+
+    try:
+        return response.json()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="ESP32 response was not valid JSON",
+        )
