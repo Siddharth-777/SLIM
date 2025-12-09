@@ -137,7 +137,6 @@ def _load_tft_resources(target: str) -> Tuple[TemporalFusionTransformer, TimeSer
         dataset = TimeSeriesDataSet.load(str(ds_path))
         model = TemporalFusionTransformer.load_from_checkpoint(
             checkpoint_path=str(ckpt_path),
-            dataset=dataset,
             map_location=torch.device("cpu"),
         )
         model.eval()
