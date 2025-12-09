@@ -8,4 +8,4 @@ plotly==5.24.1
 matplotlib
 torch==2.9.1
 lightning==2.3.3
-pytorch-forecasting==1.0.0
+pytorch-forecasting==1.5.0
