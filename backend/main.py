@@ -11,7 +11,13 @@ from dotenv import load_dotenv
 from pytorch_forecasting import TimeSeriesDataSet
 from pytorch_forecasting.models import TemporalFusionTransformer
 from supabase_client import SupabaseConfigError, get_supabase
-from anomaly import LakeInput, FullAnomalyResponse, analyze_lake_reading
+from anomaly import (
+    LakeInput,
+    FullAnomalyResponse,
+    analyze_lake_reading,
+    anomaly_to_row,   # <- add this if defined there
+)
+
 from clusters import ClusterPatternsResponse, compute_cluster_patterns
 
 
@@ -72,6 +78,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/")
+def root():
+    return {"status": "ok", "service": "slim-lake-api"}
 
 
 def _load_base_dataframe() -> pd.DataFrame:
