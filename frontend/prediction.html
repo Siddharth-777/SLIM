@@ -212,16 +212,13 @@
     </header>
 
     <div class="panel">
-      <div class="section-title">Connection</div>
+      <div class="section-title">Prediction run</div>
       <div class="controls">
-        <input id="apiBase" type="text" value="https://slim-production.up.railway.app" aria-label="API base URL" />
-        <input id="apiKey" type="password" placeholder="Optional x-api-key for /api/tsf" aria-label="API key" />
-        <button id="refreshBtn">Refresh forecasts</button>
-        <button class="secondary" id="swapBtn">Swap endpoints</button>
+        <button id="predictBtn">Predict</button>
       </div>
       <div class="status-line" id="statusLine">
         <span class="status-dot"></span>
-        <span>Ready – loading latest predictions</span>
+        <span>Ready — click predict to fetch the latest signals</span>
       </div>
       <div class="error" id="errorMsg" role="alert"></div>
     </div>
@@ -267,7 +264,7 @@
           <div class="metric-card">
             <div class="metric-title"><span>DO projection</span><span class="badge" id="doHorizon">h</span></div>
             <div class="metric-value" id="doTsf">—</div>
-            <p class="rationale" id="doRationale">Requires x-api-key</p>
+            <p class="rationale" id="doRationale">Awaiting response...</p>
           </div>
           <div class="metric-card">
             <div class="metric-title"><span>Seasonal turbidity</span><span class="badge">pattern</span></div>
@@ -295,8 +292,7 @@
   </div>
 
   <script>
-    const apiBaseInput = document.getElementById('apiBase');
-    const apiKeyInput = document.getElementById('apiKey');
+    const API_BASE = 'https://slim-production.up.railway.app';
     const errorMsg = document.getElementById('errorMsg');
     const statusLine = document.getElementById('statusLine');
     const narrative = document.getElementById('narrative');
@@ -311,10 +307,8 @@
     }
 
     async function fetchJson(path, options = {}) {
-      const base = apiBaseInput.value.replace(/\/$/, '');
+      const base = API_BASE.replace(/\/$/, '');
       const headers = options.headers || {};
-      const key = apiKeyInput.value.trim();
-      if (key) headers['x-api-key'] = key;
 
       const response = await fetch(`${base}${path}`, { ...options, headers });
       if (!response.ok) {
@@ -404,20 +398,13 @@
         renderTsf(tsfData);
         setStatus('Forecasts updated.');
       } catch (err) {
-        setStatus('TFT loaded. TSF endpoint needs an API key or is unavailable.', true);
+        setStatus('TSF endpoint is unavailable right now.', true);
         errorMsg.textContent = err.message;
-        narrative.textContent = 'Enter an x-api-key to pull the TSF hackathon insights. The TFT forecast is already displayed above.';
+        narrative.textContent = 'TSF hackathon insights could not be loaded. The TFT forecast is displayed above.';
       }
     }
 
-    document.getElementById('refreshBtn').addEventListener('click', loadData);
-    document.getElementById('swapBtn').addEventListener('click', () => {
-      const current = apiBaseInput.value;
-      apiBaseInput.value = current.includes('slim-production') ? 'http://localhost:8000' : 'https://slim-production.up.railway.app';
-      loadData();
-    });
-
-    loadData();
+    document.getElementById('predictBtn').addEventListener('click', loadData);
   </script>
 </body>
 </html>
