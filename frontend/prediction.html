@@ -297,6 +297,16 @@
     const statusLine = document.getElementById('statusLine');
     const narrative = document.getElementById('narrative');
 
+    const MOCK_FORECAST = {
+      forecast_timestamp: new Date().toISOString(),
+      predictions: {
+        ph: 7.1,
+        turbidity: 680,
+        temperature: 24.5,
+        do_level: 5.8
+      }
+    };
+
     let forecastChart;
 
     function setStatus(text, isError = false) {
@@ -382,14 +392,22 @@
 
     async function loadData() {
       errorMsg.textContent = '';
+
+      let forecastUsedMock = false;
       try {
         setStatus('Fetching TFT forecast...');
         const forecastData = await fetchJson('/forecast/all');
         renderForecast(forecastData);
       } catch (err) {
-        setStatus('Error loading TFT forecast', true);
+        forecastUsedMock = true;
+        const artifactHint = err.message.includes('artifacts') || err.message.includes('ckpt') || err.message.includes('pkl');
+        const fallbackMsg = artifactHint
+          ? 'TFT model artifacts are missing on the server. Showing a sample forecast instead.'
+          : 'Unable to load TFT forecast right now. Showing a sample forecast instead.';
+
+        setStatus(fallbackMsg, true);
         errorMsg.textContent = err.message;
-        return;
+        renderForecast(MOCK_FORECAST);
       }
 
       try {
@@ -397,10 +415,13 @@
         const tsfData = await fetchJson('/api/tsf');
         renderTsf(tsfData);
         setStatus('Forecasts updated.');
+        if (forecastUsedMock) {
+          narrative.textContent += ' (Using sample TFT values until artifacts are restored.)';
+        }
       } catch (err) {
         setStatus('TSF endpoint is unavailable right now.', true);
         errorMsg.textContent = err.message;
-        narrative.textContent = 'TSF hackathon insights could not be loaded. The TFT forecast is displayed above.';
+        narrative.textContent = 'TSF hackathon insights could not be loaded. The TFT forecast is displayed above.' + (forecastUsedMock ? ' Sample TFT values shown while artifacts are missing.' : '');
       }
     }
 
