@@ -34,7 +34,60 @@
       color: var(--text);
       font-family: 'Inter', sans-serif;
       min-height: 100vh;
-      padding: 32px 18px 48px;
+    }
+
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .logo span {
+      color: var(--accent);
+      margin-left: 8px;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 32px;
+    }
+
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+
+    nav a:hover,
+    nav a.active {
+      color: var(--text);
+    }
+
+    .main-content {
+      padding: 32px 0 48px;
     }
 
     .shell {
@@ -44,7 +97,7 @@
       gap: 20px;
     }
 
-    header {
+    .page-header {
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
@@ -202,94 +255,117 @@
   </style>
 </head>
 <body>
-  <div class="shell">
-    <header>
-      <div class="title">
-        <h1>Prediction &amp; Forecast Lab</h1>
-        <p>Visualize the Temporal Fusion Transformer forecast alongside the hackathon-friendly time-series outlook.</p>
+  <header>
+    <div class="container">
+      <div class="nav">
+        <div class="logo">SLIM<span>AI</span></div>
+        <nav>
+          <ul>
+            <li><a href="/frontend/index.html">Home</a></li>
+            <li><a href="/frontend/dashboard.html">Dashboard</a></li>
+            <li><a href="/frontend/alerts.html">Alerts</a></li>
+            <li><a href="/frontend/research.html">Research</a></li>
+            <li><a href="/frontend/prediction.html" class="active">Prediction</a></li>
+            <li><a href="/frontend/anomaly.html">Anomalies</a></li>
+            <li><a href="/frontend/simulation.html">Simulate</a></li>
+          </ul>
+        </nav>
       </div>
-      <span class="pill">API docs: <a href="https://slim-production.up.railway.app/data" target="_blank" style="color: var(--text); text-decoration: underline;">/data</a></span>
-    </header>
-
-    <div class="panel">
-      <div class="section-title">Prediction run</div>
-      <div class="controls">
-        <button id="predictBtn">Predict</button>
-      </div>
-      <div class="status-line" id="statusLine">
-        <span class="status-dot"></span>
-        <span>Ready — click predict to fetch the latest signals</span>
-      </div>
-      <div class="error" id="errorMsg" role="alert"></div>
     </div>
+  </header>
 
-    <div class="two-col">
-      <div class="panel">
-        <div class="section-title">Temporal Fusion Transformer (next interval)</div>
-        <div class="stack">
-          <div class="grid">
-            <div class="metric-card">
-              <div class="metric-title"><span>pH</span><span class="badge" id="phDelta">trend</span></div>
-              <div class="metric-value" id="phValue">—</div>
-              <div class="subtext">Forecast timestamp: <span id="forecastTs">—</span></div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-title"><span>Turbidity</span><span class="badge" id="turbidityLabel">NTU</span></div>
-              <div class="metric-value" id="turbidityValue">—</div>
-              <div class="subtext">Suspended solids projection</div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-title"><span>Temperature</span><span class="badge">°C</span></div>
-              <div class="metric-value" id="tempValue">—</div>
-              <div class="subtext">Thermal comfort outlook</div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-title"><span>DO Level</span><span class="badge">mg/L</span></div>
-              <div class="metric-value" id="doValue">—</div>
-              <div class="subtext">Dissolved oxygen resilience</div>
+  <main class="main-content">
+    <div class="container">
+      <div class="shell">
+        <div class="page-header">
+          <div class="title">
+            <h1>Prediction &amp; Forecast Lab</h1>
+            <p>Visualize the Temporal Fusion Transformer forecast alongside the hackathon-friendly time-series outlook.</p>
+          </div>
+          <span class="pill">API docs: <a href="https://slim-production.up.railway.app/data" target="_blank" style="color: var(--text); text-decoration: underline;">/data</a></span>
+        </div>
+
+        <div class="panel">
+          <div class="section-title">Prediction run</div>
+          <div class="controls">
+            <button id="predictBtn">Predict</button>
+          </div>
+          <div class="status-line" id="statusLine">
+            <span class="status-dot"></span>
+            <span>Ready — click predict to fetch the latest signals</span>
+          </div>
+          <div class="error" id="errorMsg" role="alert"></div>
+        </div>
+
+        <div class="two-col">
+          <div class="panel">
+            <div class="section-title">Temporal Fusion Transformer (next interval)</div>
+            <div class="stack">
+              <div class="grid">
+                <div class="metric-card">
+                  <div class="metric-title"><span>pH</span><span class="badge" id="phDelta">trend</span></div>
+                  <div class="metric-value" id="phValue">—</div>
+                  <div class="subtext">Forecast timestamp: <span id="forecastTs">—</span></div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-title"><span>Turbidity</span><span class="badge" id="turbidityLabel">NTU</span></div>
+                  <div class="metric-value" id="turbidityValue">—</div>
+                  <div class="subtext">Suspended solids projection</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-title"><span>Temperature</span><span class="badge">°C</span></div>
+                  <div class="metric-value" id="tempValue">—</div>
+                  <div class="subtext">Thermal comfort outlook</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-title"><span>DO Level</span><span class="badge">mg/L</span></div>
+                  <div class="metric-value" id="doValue">—</div>
+                  <div class="subtext">Dissolved oxygen resilience</div>
+                </div>
+              </div>
+              <div class="chart-box"><canvas id="forecastChart"></canvas></div>
             </div>
           </div>
-          <div class="chart-box"><canvas id="forecastChart"></canvas></div>
+
+          <div class="panel">
+            <div class="section-title">TSF quick-look (hackathon insights)</div>
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+              <div class="metric-card">
+                <div class="metric-title"><span>pH drift</span><span class="badge" id="phHorizon">h</span></div>
+                <div class="metric-value" id="phTsf">—</div>
+                <p class="rationale" id="phRationale">Awaiting response...</p>
+              </div>
+              <div class="metric-card">
+                <div class="metric-title"><span>DO projection</span><span class="badge" id="doHorizon">h</span></div>
+                <div class="metric-value" id="doTsf">—</div>
+                <p class="rationale" id="doRationale">Awaiting response...</p>
+              </div>
+              <div class="metric-card">
+                <div class="metric-title"><span>Seasonal turbidity</span><span class="badge">pattern</span></div>
+                <div class="metric-value" id="turbidityPattern">—</div>
+                <p class="rationale" id="turbidityRationale">Monthly average baseline</p>
+              </div>
+              <div class="metric-card">
+                <div class="metric-title"><span>Temp spike</span><span class="badge">summer</span></div>
+                <div class="metric-value" id="tempSpike">—</div>
+                <p class="rationale" id="tempRationale">90th percentile heat risk</p>
+              </div>
+              <div class="metric-card" style="grid-column: span 2;">
+                <div class="metric-title"><span>Health index</span><span class="badge success" id="healthTrend">—</span></div>
+                <div class="metric-value" id="healthValue">—</div>
+                <p class="rationale" id="healthRationale">Composite of pH neutrality, turbidity, DO, and thermal stability.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="section-title">Narrative</div>
+          <div class="callout" id="narrative">Use the refresh action to pull the latest forecast signals.</div>
         </div>
       </div>
-
-      <div class="panel">
-        <div class="section-title">TSF quick-look (hackathon insights)</div>
-        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
-          <div class="metric-card">
-            <div class="metric-title"><span>pH drift</span><span class="badge" id="phHorizon">h</span></div>
-            <div class="metric-value" id="phTsf">—</div>
-            <p class="rationale" id="phRationale">Awaiting response...</p>
-          </div>
-          <div class="metric-card">
-            <div class="metric-title"><span>DO projection</span><span class="badge" id="doHorizon">h</span></div>
-            <div class="metric-value" id="doTsf">—</div>
-            <p class="rationale" id="doRationale">Awaiting response...</p>
-          </div>
-          <div class="metric-card">
-            <div class="metric-title"><span>Seasonal turbidity</span><span class="badge">pattern</span></div>
-            <div class="metric-value" id="turbidityPattern">—</div>
-            <p class="rationale" id="turbidityRationale">Monthly average baseline</p>
-          </div>
-          <div class="metric-card">
-            <div class="metric-title"><span>Temp spike</span><span class="badge">summer</span></div>
-            <div class="metric-value" id="tempSpike">—</div>
-            <p class="rationale" id="tempRationale">90th percentile heat risk</p>
-          </div>
-          <div class="metric-card" style="grid-column: span 2;">
-            <div class="metric-title"><span>Health index</span><span class="badge success" id="healthTrend">—</span></div>
-            <div class="metric-value" id="healthValue">—</div>
-            <p class="rationale" id="healthRationale">Composite of pH neutrality, turbidity, DO, and thermal stability.</p>
-          </div>
-        </div>
-      </div>
     </div>
-
-    <div class="panel">
-      <div class="section-title">Narrative</div>
-      <div class="callout" id="narrative">Use the refresh action to pull the latest forecast signals.</div>
-    </div>
-  </div>
+  </main>
 
   <script>
     const API_BASE = 'https://slim-production.up.railway.app';
