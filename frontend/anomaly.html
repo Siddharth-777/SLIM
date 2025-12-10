@@ -32,23 +32,23 @@
     header {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 18px 0;
+      padding: 20px 0;
       position: sticky;
       top: 0;
       z-index: 10;
     }
 
-    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .container { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
     .nav { display: flex; align-items: center; justify-content: space-between; }
 
-    .logo { font-size: 1.1rem; font-weight: 700; color: var(--text); letter-spacing: 0.5px; }
-    .logo span { color: var(--primary); }
+    .logo { font-size: 1.25rem; font-weight: 700; color: var(--text); letter-spacing: 0.5px; }
+    .logo span { color: var(--primary); margin-left: 8px; }
 
-    nav ul { list-style: none; display: flex; gap: 20px; }
-    nav a { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    nav ul { list-style: none; display: flex; gap: 32px; }
+    nav a { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 0.95rem; transition: color 0.2s ease; }
     nav a:hover, nav a.active { color: var(--text); }
 
-    main { padding: 36px 0 64px; }
+    .main-content { padding: 36px 0 64px; }
     .page-header { margin-bottom: 24px; }
     .page-header h1 { font-size: 2rem; margin-bottom: 8px; }
     .page-header p { color: var(--text-muted); }
@@ -107,25 +107,29 @@
 </head>
 <body>
   <header>
-    <div class="container nav">
-      <div class="logo">SLIM <span>AI</span></div>
-      <nav>
-        <ul>
-          <li><a href="dashboard.html">Dashboard</a></li>
-          <li><a href="anomaly.html" class="active">Anomaly</a></li>
-          <li><a href="research.html">Research</a></li>
-          <li><a href="simulation.html">Simulation</a></li>
-          <li><a href="alerts.html">Alerts</a></li>
-        </ul>
-      </nav>
+    <div class="container">
+      <div class="nav">
+        <div class="logo">SLIM AI<span>Lake Intelligence</span></div>
+        <nav>
+          <ul>
+            <li><a href="prediction.html">Prediction</a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a class="active" href="anomaly.html">Anomaly</a></li>
+            <li><a href="research.html">Research</a></li>
+            <li><a href="simulation.html">Simulation</a></li>
+            <li><a href="alerts.html">Alerts</a></li>
+          </ul>
+        </nav>
+      </div>
     </div>
   </header>
 
-  <main class="container">
-    <div class="page-header">
-      <h1>Anomaly Lab</h1>
-      <p>Probe incoming readings against statistical and multivariate anomaly detectors from the hosted API.</p>
-    </div>
+  <main class="main-content">
+    <div class="container">
+      <div class="page-header">
+        <h1>Anomaly Detection Lab</h1>
+        <p>Probe incoming readings against statistical and multivariate anomaly detectors from the hosted API.</p>
+      </div>
 
     <div class="grid">
       <div class="panel">
@@ -148,6 +152,7 @@
         <h2>Result</h2>
         <div id="anomaly-results" class="result-grid"></div>
       </div>
+    </div>
     </div>
   </main>
 
