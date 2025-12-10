@@ -260,6 +260,51 @@
       margin-top: 24px;
     }
 
+    .insights-section {
+      margin-top: 24px;
+    }
+
+    .insights-section h4 {
+      margin-bottom: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 0.9rem;
+    }
+
+    .insight-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .insight-card {
+      background: rgba(17, 29, 50, 0.8);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .insight-label {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      letter-spacing: 0.3px;
+    }
+
+    .insight-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .insight-subtext {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
     .details-grid {
       display: grid;
       gap: 16px;
@@ -576,6 +621,11 @@
               </div>
             </div>
           </div>
+
+          <div class="insights-section">
+            <h4>Lake Insights</h4>
+            <div class="insight-grid" id="insight-grid"></div>
+          </div>
         </div>
 
         <div class="panel">
@@ -622,6 +672,7 @@
     const requestButton = document.getElementById('request-reading-btn');
     const requestStatus = document.getElementById('request-status');
     const latestReadingContainer = document.getElementById('latest-reading');
+    const insightGrid = document.getElementById('insight-grid');
 
     const API_BASE = 'https://slim-production.up.railway.app';
     const API_HEADERS = { 'x-api-key': 'password' };
@@ -646,27 +697,51 @@
       'S-06': { temp: 18.7, ph: 7.5, oxygen: 8.8, turbidity: 2.6, depth: 14.1, lastUpdate: '3 hours ago' }
     };
 
-    function persistApiKey() {
-      const key = apiKeyInput.value.trim();
-      if (key) {
-        localStorage.setItem('slimApiKey', key);
-      }
-    }
+    function renderLakeInsights() {
+      if (!insightGrid) return;
 
-    function loadApiKey() {
-      const storedKey = localStorage.getItem('slimApiKey');
-      if (storedKey) {
-        apiKeyInput.value = storedKey;
-      }
-    }
+      const values = Object.values(sensorData);
+      if (!values.length) return;
 
-    function getAuthHeaders(includeJson = true) {
-      const headers = includeJson ? { 'Content-Type': 'application/json' } : {};
-      const key = apiKeyInput.value.trim();
-      if (key) {
-        headers['X-API-KEY'] = key;
-      }
-      return headers;
+      const avg = (arr) => arr.reduce((sum, val) => sum + val, 0) / arr.length;
+
+      const avgTemp = avg(values.map((v) => v.temp)).toFixed(1);
+      const avgPh = avg(values.map((v) => v.ph)).toFixed(2);
+      const avgOxygen = avg(values.map((v) => v.oxygen)).toFixed(1);
+      const avgTurbidity = avg(values.map((v) => v.turbidity)).toFixed(1);
+
+      const healthyCount = sensors.filter((s) => s.status === 'healthy').length;
+      const warningCount = sensors.length - healthyCount;
+
+      const insights = [
+        {
+          label: 'Lake Conditions',
+          value: `${avgTemp}°C / pH ${avgPh}`,
+          subtext: `Avg dissolved oxygen ${avgOxygen} mg/L across stations.`
+        },
+        {
+          label: 'Clarity Outlook',
+          value: `${avgTurbidity} NTU`,
+          subtext: avgTurbidity <= 3
+            ? 'Water remains clear across monitored sites.'
+            : 'Elevated turbidity detected at some sites.'
+        },
+        {
+          label: 'Network Health',
+          value: `${healthyCount}/${sensors.length} Healthy`,
+          subtext: warningCount
+            ? `${warningCount} sensor${warningCount > 1 ? 's' : ''} reporting warnings.`
+            : 'All sensors within normal ranges.'
+        }
+      ];
+
+      insightGrid.innerHTML = insights.map((insight) => `
+        <div class="insight-card">
+          <div class="insight-label">${insight.label}</div>
+          <div class="insight-value">${insight.value}</div>
+          <div class="insight-subtext">${insight.subtext}</div>
+        </div>
+      `).join('');
     }
 
     let selectedSensor = null;
@@ -984,6 +1059,7 @@
     initMap();
     initChart();
     populateTable();
+    renderLakeInsights();
     
     setInterval(() => {
       populateTable();
