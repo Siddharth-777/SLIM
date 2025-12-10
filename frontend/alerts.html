@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SLIM AI | Alerts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a1628;
+      --surface: #111d32;
+      --border: #1e3a5f;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.6; }
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 18px 0; position: sticky; top: 0; z-index: 10; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .nav { display: flex; align-items: center; justify-content: space-between; }
+    .logo { font-size: 1.1rem; font-weight: 700; color: var(--text); letter-spacing: 0.5px; }
+    .logo span { color: var(--primary); }
+    nav ul { list-style: none; display: flex; gap: 20px; }
+    nav a { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    nav a:hover, nav a.active { color: var(--text); }
+    main { padding: 36px 0 64px; }
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { font-size: 2rem; margin-bottom: 8px; }
+    .page-header p { color: var(--text-muted); }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+    .panel h2 { font-size: 1rem; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; }
+    label { display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 6px; }
+    input[type="number"] { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: #0f1c30; color: var(--text); margin-bottom: 12px; }
+    button { background: var(--primary); color: white; border: none; padding: 12px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.2s, transform 0.2s; }
+    button:hover { background: #2563eb; transform: translateY(-1px); }
+    .flag { background: #0f1c30; border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+    .flag h3 { font-size: 1rem; margin-bottom: 6px; }
+    .flag p { color: var(--text-muted); font-size: 0.95rem; }
+    .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; font-weight: 700; font-size: 0.85rem; }
+    .pill.none { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.5); }
+    .pill.low { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.5); }
+    .pill.medium { background: rgba(245,158,11,0.25); color: var(--warning); border: 1px solid rgba(245,158,11,0.7); }
+    .pill.high { background: rgba(239,68,68,0.18); color: var(--danger); border: 1px solid rgba(239,68,68,0.7); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="logo">SLIM <span>AI</span></div>
+      <nav>
+        <ul>
+          <li><a href="dashboard.html">Dashboard</a></li>
+          <li><a href="anomaly.html">Anomaly</a></li>
+          <li><a href="research.html">Research</a></li>
+          <li><a href="simulation.html">Simulation</a></li>
+          <li><a href="alerts.html" class="active">Alerts</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="page-header">
+      <h1>Event Alerts</h1>
+      <p>Trigger the /api/event-detection engine to flag polluted inflow, aerator faults, and diurnal drift patterns.</p>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Current Reading</h2>
+        <form id="alert-form">
+          <label for="ph">pH</label>
+          <input type="number" id="ph" name="ph" step="0.01" value="7.1" required>
+          <label for="turbidity">Turbidity (NTU)</label>
+          <input type="number" id="turbidity" name="turbidity" step="0.1" value="410" required>
+          <label for="temperature">Temperature (°C)</label>
+          <input type="number" id="temperature" name="temperature" step="0.1" value="27.8" required>
+          <label for="do_level">DO Level (mg/L)</label>
+          <input type="number" id="do_level" name="do_level" step="0.1" value="5.2" required>
+          <label for="rainfall_mm">Rainfall (mm)</label>
+          <input type="number" id="rainfall_mm" name="rainfall_mm" step="1" value="18" required>
+          <label for="measurement_hour">Measurement Hour (0-23)</label>
+          <input type="number" id="measurement_hour" name="measurement_hour" min="0" max="23" value="20" required>
+          <button type="submit">Detect Events</button>
+        </form>
+        <p id="alert-toast" style="margin-top:10px; color: var(--text-muted);">Watching https://slim-production.up.railway.app/api/event-detection</p>
+      </div>
+      <div class="panel">
+        <h2>Flags</h2>
+        <div id="alert-results"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const API_BASE = 'https://slim-production.up.railway.app';
+    const results = document.getElementById('alert-results');
+    const toast = document.getElementById('alert-toast');
+
+    function renderFlag(flag) {
+      return `
+        <div class="flag">
+          <h3>${flag.name}</h3>
+          <span class="pill ${flag.severity}">${flag.severity.toUpperCase()}</span>
+          <p style="margin-top:8px;">${flag.reason}</p>
+        </div>
+      `;
+    }
+
+    async function detectEvents(payload) {
+      toast.textContent = 'Detecting...';
+      try {
+        const res = await fetch(`${API_BASE}/api/event-detection`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('API error');
+        const data = await res.json();
+        results.innerHTML = data.flags.map(renderFlag).join('');
+        toast.textContent = data.summary.join(' · ');
+      } catch (err) {
+        toast.textContent = 'Unable to reach alerts endpoint.';
+      }
+    }
+
+    document.getElementById('alert-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const payload = {
+        reading: {
+          ph: parseFloat(e.target.ph.value),
+          turbidity: parseFloat(e.target.turbidity.value),
+          temperature: parseFloat(e.target.temperature.value),
+          do_level: parseFloat(e.target.do_level.value)
+        },
+        rainfall_mm: parseFloat(e.target.rainfall_mm.value),
+        measurement_hour: parseInt(e.target.measurement_hour.value, 10),
+        previous_readings: []
+      };
+      detectEvents(payload);
+    });
+
+    detectEvents({
+      reading: { ph: 7.1, turbidity: 410, temperature: 27.8, do_level: 5.2 },
+      rainfall_mm: 18,
+      measurement_hour: 20,
+      previous_readings: []
+    });
+  </script>
+</body>
+</html>

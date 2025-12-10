@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SLIM AI | Anomaly Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a1628;
+      --surface: #111d32;
+      --border: #1e3a5f;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 0;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .nav { display: flex; align-items: center; justify-content: space-between; }
+
+    .logo { font-size: 1.1rem; font-weight: 700; color: var(--text); letter-spacing: 0.5px; }
+    .logo span { color: var(--primary); }
+
+    nav ul { list-style: none; display: flex; gap: 20px; }
+    nav a { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    nav a:hover, nav a.active { color: var(--text); }
+
+    main { padding: 36px 0 64px; }
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { font-size: 2rem; margin-bottom: 8px; }
+    .page-header p { color: var(--text-muted); }
+
+    .grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+    }
+    .panel h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 14px; }
+
+    label { display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 6px; }
+    input[type="number"] {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #0f1c30;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+    button:hover { background: #2563eb; transform: translateY(-1px); }
+
+    .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .chip {
+      padding: 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #0f1c30;
+    }
+    .chip h3 { font-size: 0.95rem; margin-bottom: 8px; color: var(--text); }
+    .status { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; font-weight: 700; font-size: 0.85rem; }
+    .status[data-level="none"] { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.4); }
+    .status[data-level="low"] { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.4); }
+    .status[data-level="medium"] { background: rgba(245, 158, 11, 0.25); color: var(--warning); border: 1px solid rgba(245,158,11,0.6); }
+    .status[data-level="high"] { background: rgba(239, 68, 68, 0.18); color: var(--danger); border: 1px solid rgba(239,68,68,0.6); }
+
+    .sparkline { height: 6px; border-radius: 999px; background: var(--border); overflow: hidden; margin-top: 10px; }
+    .sparkline span { display: block; height: 100%; background: var(--primary); }
+
+    .toast { margin-top: 14px; color: var(--text-muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="logo">SLIM <span>AI</span></div>
+      <nav>
+        <ul>
+          <li><a href="dashboard.html">Dashboard</a></li>
+          <li><a href="anomaly.html" class="active">Anomaly</a></li>
+          <li><a href="research.html">Research</a></li>
+          <li><a href="simulation.html">Simulation</a></li>
+          <li><a href="alerts.html">Alerts</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="page-header">
+      <h1>Anomaly Lab</h1>
+      <p>Probe incoming readings against statistical and multivariate anomaly detectors from the hosted API.</p>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Input Reading</h2>
+        <form id="anomaly-form">
+          <label for="ph">pH</label>
+          <input type="number" id="ph" name="ph" step="0.01" value="7.2" required>
+          <label for="turbidity">Turbidity (NTU)</label>
+          <input type="number" id="turbidity" name="turbidity" step="0.1" value="320" required>
+          <label for="temperature">Temperature (°C)</label>
+          <input type="number" id="temperature" name="temperature" step="0.1" value="24.5" required>
+          <label for="do_level">DO Level (mg/L)</label>
+          <input type="number" id="do_level" name="do_level" step="0.1" value="6.8" required>
+          <button type="submit">Run Anomaly Scan</button>
+        </form>
+        <div class="toast" id="anomaly-toast">Connected to https://slim-production.up.railway.app/api/analyze</div>
+      </div>
+
+      <div class="panel">
+        <h2>Result</h2>
+        <div id="anomaly-results" class="result-grid"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const API_BASE = 'https://slim-production.up.railway.app';
+    const resultArea = document.getElementById('anomaly-results');
+    const toast = document.getElementById('anomaly-toast');
+
+    function renderChip(title, severity, reason) {
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.innerHTML = `
+        <h3>${title}</h3>
+        <div class="status" data-level="${severity}">${severity.toUpperCase()}</div>
+        <p style="margin-top:8px; color: var(--text-muted); font-size: 0.9rem;">${reason}</p>
+        <div class="sparkline"><span style="width:${['none','low','medium','high'].indexOf(severity) * 33 + 1}%"></span></div>
+      `;
+      return chip;
+    }
+
+    async function fetchAnomaly(payload) {
+      toast.textContent = 'Running detection...';
+      try {
+        const res = await fetch(`${API_BASE}/api/analyze`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('API error');
+        const data = await res.json();
+        resultArea.innerHTML = '';
+        const entries = [
+          ['pH Anomaly', data.ph_anomaly],
+          ['Turbidity Anomaly', data.turbidity_anomaly],
+          ['Temperature Anomaly', data.temperature_anomaly],
+          ['DO Anomaly', data.do_anomaly],
+          ['Pattern', data.pattern_anomaly],
+        ];
+        entries.forEach(([title, item]) => {
+          resultArea.appendChild(renderChip(title, item.severity, item.reason));
+        });
+        toast.textContent = 'Scan complete. Multivariate check includes Isolation Forest baseline.';
+      } catch (err) {
+        toast.textContent = 'Unable to reach anomaly endpoint. Check network or CORS.';
+      }
+    }
+
+    document.getElementById('anomaly-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const payload = {
+        ph: parseFloat(e.target.ph.value),
+        turbidity: parseFloat(e.target.turbidity.value),
+        temperature: parseFloat(e.target.temperature.value),
+        do_level: parseFloat(e.target.do_level.value)
+      };
+      fetchAnomaly(payload);
+    });
+
+    fetchAnomaly({ ph: 7.2, turbidity: 320, temperature: 24.5, do_level: 6.8 });
+  </script>
+</body>
+</html>
