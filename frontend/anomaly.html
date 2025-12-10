@@ -153,6 +153,10 @@
 
   <script>
     const API_BASE = 'https://slim-production.up.railway.app';
+    const API_HEADERS = {
+      'Content-Type': 'application/json',
+      'x-api-key': 'password'
+    };
     const resultArea = document.getElementById('anomaly-results');
     const toast = document.getElementById('anomaly-toast');
 
@@ -173,7 +177,7 @@
       try {
         const res = await fetch(`${API_BASE}/api/analyze`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: API_HEADERS,
           body: JSON.stringify(payload)
         });
         if (!res.ok) throw new Error('API error');

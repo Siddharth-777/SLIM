@@ -92,6 +92,10 @@
 
   <script>
     const API_BASE = 'https://slim-production.up.railway.app';
+    const API_HEADERS = {
+      'Content-Type': 'application/json',
+      'x-api-key': 'password'
+    };
     const simResults = document.getElementById('sim-results');
     const simToast = document.getElementById('sim-toast');
 
@@ -111,7 +115,7 @@
       try {
         const res = await fetch(`${API_BASE}/api/digital-twin`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: API_HEADERS,
           body: JSON.stringify(payload)
         });
         if (!res.ok) throw new Error('API error');

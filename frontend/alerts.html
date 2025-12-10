@@ -102,6 +102,10 @@
 
   <script>
     const API_BASE = 'https://slim-production.up.railway.app';
+    const API_HEADERS = {
+      'Content-Type': 'application/json',
+      'x-api-key': 'password'
+    };
     const results = document.getElementById('alert-results');
     const toast = document.getElementById('alert-toast');
 
@@ -120,7 +124,7 @@
       try {
         const res = await fetch(`${API_BASE}/api/event-detection`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: API_HEADERS,
           body: JSON.stringify(payload)
         });
         if (!res.ok) throw new Error('API error');

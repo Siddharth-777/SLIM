@@ -93,6 +93,7 @@
 
   <script>
     const API_BASE = 'https://slim-production.up.railway.app';
+    const API_HEADERS = { 'x-api-key': 'password' };
 
     function renderNodes(nodes) {
       return nodes.map(node => `
@@ -135,7 +136,7 @@
 
     async function loadResearch() {
       try {
-        const res = await fetch(`${API_BASE}/api/research-models`);
+        const res = await fetch(`${API_BASE}/api/research-models`, { headers: API_HEADERS });
         const data = await res.json();
         const graph = data.graph_network;
         document.getElementById('graph-summary').innerHTML = `
