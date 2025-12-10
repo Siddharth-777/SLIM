@@ -126,6 +126,36 @@
       margin-bottom: 20px;
     }
 
+    .panel-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .panel-actions .action-button {
+      background: var(--primary);
+      border: none;
+      color: white;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease;
+    }
+
+    .panel-actions .action-button:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+    }
+
+    .panel-actions .action-button:disabled {
+      background: var(--border);
+      cursor: not-allowed;
+      transform: none;
+    }
+
     .map-container {
       position: relative;
       height: 500px;
@@ -365,6 +395,50 @@
       color: var(--text-muted);
     }
 
+    .status-text {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+    }
+
+    .latest-reading {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(17, 27, 50, 0.9));
+      margin-top: 12px;
+    }
+
+    .latest-reading h4 {
+      margin-bottom: 12px;
+      font-size: 1rem;
+    }
+
+    .latest-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .latest-metric {
+      background: rgba(17, 29, 50, 0.8);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+    }
+
+    .latest-metric .label {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .latest-metric .value {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
     .chart-container {
       margin-top: 20px;
       height: 400px;
@@ -506,6 +580,11 @@
 
         <div class="panel">
           <div class="panel-title">Live Readings</div>
+          <div class="panel-actions">
+            <button class="action-button" id="request-reading-btn">Extract ESP32 Reading</button>
+          </div>
+          <div class="status-text" id="request-status">Request the ESP32 to capture a fresh reading and store it in Supabase.</div>
+          <div class="latest-reading" id="latest-reading" style="display: none;"></div>
           <div id="sensor-detail">
             <div class="empty-state">
               <p>Select a sensor from the map to view details</p>
@@ -540,6 +619,16 @@
   </main>
 
   <script>
+    const requestButton = document.getElementById('request-reading-btn');
+    const requestStatus = document.getElementById('request-status');
+    const latestReadingContainer = document.getElementById('latest-reading');
+
+    const API_BASE = window.location.origin === 'null' || !window.location.origin
+      ? 'http://localhost:8000'
+      : window.location.origin;
+
+    const apiUrl = (path) => `${API_BASE}${path}`;
+
     const sensors = [
       { id: 'S-01', name: 'North Shore', x: 32, y: 30, status: 'healthy' },
       { id: 'S-02', name: 'East Bay', x: 72, y: 36, status: 'healthy' },
@@ -877,6 +966,117 @@
     setInterval(() => {
       populateTable();
     }, 10000);
+
+    function renderLatestReading(reading) {
+      if (!reading) return;
+
+      const timestamp = reading.timestamp
+        ? new Date(reading.timestamp).toLocaleString()
+        : 'Not available';
+
+      latestReadingContainer.style.display = 'block';
+      latestReadingContainer.innerHTML = `
+        <h4>Latest ESP32 Reading</h4>
+        <div class="status-text">Saved to Supabase • ${timestamp}</div>
+        <div class="latest-grid">
+          <div class="latest-metric">
+            <span class="label">Temperature</span>
+            <span class="value">${Number(reading.temperature).toFixed(2)} °C</span>
+          </div>
+          <div class="latest-metric">
+            <span class="label">pH Level</span>
+            <span class="value">${Number(reading.ph).toFixed(2)}</span>
+          </div>
+          <div class="latest-metric">
+            <span class="label">Dissolved O₂</span>
+            <span class="value">${Number(reading.do_level).toFixed(2)} mg/L</span>
+          </div>
+          <div class="latest-metric">
+            <span class="label">Turbidity</span>
+            <span class="value">${Number(reading.turbidity).toFixed(2)} NTU</span>
+          </div>
+        </div>
+      `;
+    }
+
+    async function fetchLatestReading() {
+      const response = await fetch(apiUrl('/api/lake-data/latest'));
+
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || `Failed to fetch latest reading (${response.status})`);
+      }
+
+      return response.json();
+    }
+
+    async function pollForNewReading(attempts = 10, delayMs = 3000) {
+      let aborted = false;
+      for (let attempt = 0; attempt < attempts; attempt++) {
+        try {
+          const latest = await fetchLatestReading();
+          renderLatestReading(latest);
+          requestStatus.textContent = 'Latest reading loaded from Supabase.';
+          requestButton.disabled = false;
+          return;
+        } catch (error) {
+          if (error.message.includes('Failed to fetch')) {
+            requestStatus.textContent = `Unable to reach ${API_BASE} while waiting for the reading. Confirm the backend is running.`;
+            aborted = true;
+            break;
+          }
+          requestStatus.textContent = 'Waiting for ESP32 to upload reading...';
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        }
+      }
+
+      requestButton.disabled = false;
+      if (!aborted) {
+        requestStatus.textContent = 'No new reading detected yet. Try again in a moment.';
+      }
+    }
+
+    async function requestEsp32Reading() {
+      requestButton.disabled = true;
+      requestStatus.textContent = 'Requesting current reading from ESP32...';
+
+      try {
+        const response = await fetch(apiUrl('/api/esp32/request-read'), {
+          method: 'POST',
+        });
+
+        if (!response.ok) {
+          const message = await response.text();
+          throw new Error(message || 'Request failed');
+        }
+
+        requestStatus.textContent = 'Request sent. Waiting for the device to capture and store the reading...';
+        await pollForNewReading();
+      } catch (error) {
+        const networkHint = error.message.includes('Failed to fetch')
+          ? ` Unable to reach ${API_BASE}. Make sure the backend is running.`
+          : '';
+        requestStatus.textContent = `Request failed: ${error.message}.${networkHint}`;
+        console.error('ESP32 read request failed', error);
+        requestButton.disabled = false;
+      }
+    }
+
+    async function loadLatestReading() {
+      try {
+        const latest = await fetchLatestReading();
+        renderLatestReading(latest);
+        requestStatus.textContent = 'Latest reading loaded from Supabase.';
+      } catch (error) {
+        const unreachable = error.message.includes('Failed to fetch')
+          ? `Unable to reach ${API_BASE}. Make sure the backend is running and the page is served from the same origin.`
+          : 'No existing readings available yet.';
+        requestStatus.textContent = unreachable;
+      }
+    }
+
+    requestButton.addEventListener('click', requestEsp32Reading);
+    loadLatestReading();
   </script>
 </body>
 </html>
