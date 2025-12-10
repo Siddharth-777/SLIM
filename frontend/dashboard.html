@@ -623,9 +623,8 @@
     const requestStatus = document.getElementById('request-status');
     const latestReadingContainer = document.getElementById('latest-reading');
 
-    const API_BASE = window.location.origin === 'null' || !window.location.origin
-      ? 'http://localhost:8000'
-      : window.location.origin;
+    const API_BASE = 'https://slim-production.up.railway.app';
+    const API_HEADERS = { 'x-api-key': 'password' };
 
     const apiUrl = (path) => `${API_BASE}${path}`;
 
@@ -1023,7 +1022,9 @@
     }
 
     async function fetchLatestReading() {
-      const response = await fetch(apiUrl('/api/lake-data/latest'));
+      const response = await fetch(apiUrl('/api/lake-data/latest'), {
+        headers: API_HEADERS,
+      });
 
       if (!response.ok) {
         const message = await response.text();
@@ -1066,6 +1067,7 @@
       try {
         const response = await fetch(apiUrl('/api/esp32/request-read'), {
           method: 'POST',
+          headers: API_HEADERS,
         });
 
         if (!response.ok) {
@@ -1077,7 +1079,7 @@
         await pollForNewReading();
       } catch (error) {
         const networkHint = error.message.includes('Failed to fetch')
-          ? ` Unable to reach ${API_BASE}. Make sure the backend is running.`
+          ? ' Unable to reach the API. Please confirm connectivity.'
           : '';
         requestStatus.textContent = `Request failed: ${error.message}.${networkHint}`;
         console.error('ESP32 read request failed', error);
@@ -1092,7 +1094,7 @@
         requestStatus.textContent = 'Latest reading loaded from Supabase.';
       } catch (error) {
         const unreachable = error.message.includes('Failed to fetch')
-          ? `Unable to reach ${API_BASE}. Make sure the backend is running and the page is served from the same origin.`
+          ? 'Unable to reach the API. Please confirm connectivity.'
           : 'No existing readings available yet.';
         requestStatus.textContent = unreachable;
       }
