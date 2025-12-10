@@ -540,22 +540,13 @@
           <div class="panel-title">Sensor Network Map</div>
           <div class="map-container">
             <svg class="map-svg" viewBox="0 0 800 500" style="width: 100%; height: 100%;">
-              <!-- Water body background -->
               <rect width="800" height="500" fill="#0f1e35"/>
-              
-              <!-- Lake shape with realistic irregular outline -->
-              <path d="M 150 200 Q 180 150 250 140 Q 320 135 380 145 Q 450 155 520 150 Q 590 145 650 170 Q 690 185 710 220 Q 725 250 720 290 Q 715 330 690 360 Q 660 390 610 410 Q 550 430 480 435 Q 410 440 340 435 Q 270 430 210 410 Q 160 390 135 355 Q 110 320 115 280 Q 120 240 150 200 Z" 
+              <path d="M 150 200 Q 180 150 250 140 Q 320 135 380 145 Q 450 155 520 150 Q 590 145 650 170 Q 690 185 710 220 Q 725 250 720 290 Q 715 330 690 360 Q 660 390 610 410 Q 550 430 480 435 Q 410 440 340 435 Q 270 430 210 410 Q 160 390 135 355 Q 110 320 115 280 Q 120 240 150 200 Z"
                     fill="#1a2942" opacity="0.6"/>
-              
-              <!-- Deep water zones -->
               <ellipse cx="420" cy="310" rx="150" ry="100" fill="#152840" opacity="0.4"/>
               <ellipse cx="450" cy="290" rx="80" ry="60" fill="#0a1628" opacity="0.5"/>
-              
-              <!-- Shallow areas near shores -->
               <path d="M 150 200 Q 180 190 220 185 Q 180 220 165 250 Q 155 225 150 200" fill="#1e3a5f" opacity="0.3"/>
               <path d="M 680 180 Q 700 200 710 230 Q 695 210 680 180" fill="#1e3a5f" opacity="0.3"/>
-              
-              <!-- Grid overlay -->
               <g opacity="0.15">
                 <line x1="0" y1="100" x2="800" y2="100" stroke="#94a3b8" stroke-width="0.5"/>
                 <line x1="0" y1="200" x2="800" y2="200" stroke="#94a3b8" stroke-width="0.5"/>
@@ -773,17 +764,12 @@
       const history = [];
       const now = new Date();
       
-      // 8 readings per day: 00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00
       const readingTimes = [0, 3, 6, 9, 12, 15, 18, 21];
-      
-      // Generate data for last 7 days
       for (let day = 6; day >= 0; day--) {
         for (let timeIdx = 0; timeIdx < readingTimes.length; timeIdx++) {
           const readingDate = new Date(now);
           readingDate.setDate(readingDate.getDate() - day);
           readingDate.setHours(readingTimes[timeIdx], 0, 0, 0);
-          
-          // Add some realistic variance based on time of day
           const timeVariance = Math.sin(timeIdx * Math.PI / 4) * 1.5;
           const randomVariance = (Math.random() - 0.5) * 0.8;
           
@@ -799,10 +785,7 @@
       
       return history;
     }
-
-    function initChart() {
-      // Chart will be created when sensor is selected
-    }
+    function initChart() {}
 
     function updateChart(sensorId) {
       const history = generateHistoricalData(sensorId);

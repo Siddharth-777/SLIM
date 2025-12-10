@@ -76,7 +76,7 @@ def _health_index(df: pd.DataFrame) -> pd.Series:
         spread = series.max() - series.min()
         return spread if spread != 0 else 1.0
 
-    ph_score = 1 - (df["ph"] - 7).abs() / 3  # closeness to neutral
+    ph_score = 1 - (df["ph"] - 7).abs() / 3
     turbidity_score = 1 - (df["turbidity"] - df["turbidity"].min()) / _safe_range(
         df["turbidity"]
     )

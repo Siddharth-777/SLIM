@@ -17,7 +17,7 @@ from anomaly import (
     LakeInput,
     FullAnomalyResponse,
     analyze_lake_reading,
-    anomaly_to_row,   # <- add this if defined there
+    anomaly_to_row,
 )
 
 from clusters import ClusterPatternsResponse, compute_cluster_patterns
@@ -248,7 +248,6 @@ def _prepare_prediction_frame(
     last_timestamp = df["timestamp"].max()
     last_idx = int(df["time_idx"].max())
 
-    # last known sensor values
     last_values = df.iloc[-1][TARGETS]
 
     future_rows = []
@@ -258,7 +257,6 @@ def _prepare_prediction_frame(
             "time_idx": last_idx + horizon,
             "series_id": "buoy_1",
         }
-        # copy last known reading for all targets
         for col in TARGETS:
             row[col] = float(last_values[col])
         future_rows.append(row)
@@ -266,7 +264,6 @@ def _prepare_prediction_frame(
     future_df = pd.DataFrame(future_rows)
     combined = pd.concat([df, future_df], ignore_index=True)
 
-    # safety: ensure no NaNs slipped in anywhere
     for col in TARGETS:
         combined[col] = combined[col].interpolate().bfill().ffill()
 
@@ -296,7 +293,6 @@ def _generate_forecast(df: pd.DataFrame) -> ForecastResponse:
 
         forecast_tensor = model.predict(predict_loader)
         if forecast_tensor.ndim == 3:
-            # Take median quantile if quantile dimension is present
             forecast_tensor = forecast_tensor[..., forecast_tensor.shape[-1] // 2]
         next_value = float(forecast_tensor[0, 0].detach().cpu().item())
 

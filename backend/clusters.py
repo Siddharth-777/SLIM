@@ -160,7 +160,6 @@ def compute_cluster_patterns(
                 }
             ).execute()
         except Exception as exc:
-            # non-fatal; just log to console
             print(f"[cluster_patterns] Error storing to Supabase: {exc}")
 
     return result
