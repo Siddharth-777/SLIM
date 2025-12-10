@@ -94,7 +94,7 @@ def build_datasets(df: pd.DataFrame, target: str):
     train_dl = training.to_dataloader(
         train=True,
         batch_size=64,
-        num_workers=0,  # 0 on Windows
+        num_workers=0,
         shuffle=True,
     )
 
@@ -109,7 +109,7 @@ def build_model(training: TimeSeriesDataSet) -> TemporalFusionTransformer:
         dropout=0.1,
         hidden_continuous_size=16,
         loss=QuantileLoss(),
-        output_size=7,  # default TFT quantiles
+        output_size=7,
         learning_rate=1e-3,
     )
 
@@ -167,7 +167,6 @@ def main():
         trainer.fit(model, train_dataloaders=train_dl)
         print(f"[{target}] Training completed!")
 
-        # save best checkpoint + dataset definition into artifacts/
         best_ckpt = ckpt_cb.best_model_path
         if best_ckpt and os.path.exists(best_ckpt):
             dst_ckpt = ARTIFACT_DIR / f"tft_{target}_best.ckpt"

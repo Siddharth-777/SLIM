@@ -86,7 +86,6 @@ def detect_events(payload: EventDetectionRequest) -> EventDetectionResponse:
 
     do_trend = _trend_slope(history[-5:], "do_level") if history else 0.0
 
-    # Sudden polluted inflow
     polluted = (
         r.turbidity > TURB_MEAN + 2 * TURB_STD
         or r.ph < PH_MEAN - 2 * PH_STD
@@ -105,7 +104,6 @@ def detect_events(payload: EventDetectionRequest) -> EventDetectionResponse:
         )
     )
 
-    # Heavy rain effect on turbidity
     heavy_rain = payload.rainfall_mm >= 15 and r.turbidity > TURB_MEAN + TURB_STD
     flags.append(
         EventSignal(
@@ -120,7 +118,6 @@ def detect_events(payload: EventDetectionRequest) -> EventDetectionResponse:
         )
     )
 
-    # Aerator failure prediction
     aerator_fail = (
         r.do_level < DO_MEAN - 1.5 * DO_STD
         and r.temperature > TEMP_MEAN + 0.5 * TEMP_STD
@@ -138,7 +135,6 @@ def detect_events(payload: EventDetectionRequest) -> EventDetectionResponse:
         )
     )
 
-    # Sensor drift detection (monotonic creep without spikes)
     drift = False
     drift_reason = ""
     if history:
@@ -160,7 +156,6 @@ def detect_events(payload: EventDetectionRequest) -> EventDetectionResponse:
         )
     )
 
-    # Sensor malfunction (impossible or frozen values)
     malfunction = (
         r.ph < 4
         or r.ph > 10
@@ -180,7 +175,6 @@ def detect_events(payload: EventDetectionRequest) -> EventDetectionResponse:
         )
     )
 
-    # Night vs day chemistry cycle detection
     night_day_trigger = False
     cycle_reason = ""
     if payload.measurement_hour is not None:
@@ -201,7 +195,6 @@ def detect_events(payload: EventDetectionRequest) -> EventDetectionResponse:
         )
     )
 
-    # Critical DO-driven fish mortality risk
     do_critical = r.do_level <= 3 or r.do_level < DO_MEAN - 2 * DO_STD
     fish_mortality = do_critical or (do_trend < -0.4 and r.do_level < DO_MEAN - DO_STD)
     flags.append(
@@ -217,7 +210,6 @@ def detect_events(payload: EventDetectionRequest) -> EventDetectionResponse:
         )
     )
 
-    # Explicit DO threshold alert
     do_below_three = r.do_level <= 3
     flags.append(
         EventSignal(
@@ -232,7 +224,6 @@ def detect_events(payload: EventDetectionRequest) -> EventDetectionResponse:
         )
     )
 
-    # Heat stress + low oxygen combined anomaly
     heat_low_do = (
         r.temperature > TEMP_MEAN + TEMP_STD
         and (r.do_level < DO_MEAN - DO_STD or do_critical)
@@ -250,7 +241,6 @@ def detect_events(payload: EventDetectionRequest) -> EventDetectionResponse:
         )
     )
 
-    # Algae bloom risk signals
     temp_bloom = r.temperature > TEMP_MEAN + 0.75 * TEMP_STD
     ph_bloom = r.ph > max(PH_MEAN + 0.8 * PH_STD, 8.3)
     do_bloom = r.do_level < DO_MEAN - 0.75 * DO_STD or do_trend < -0.3
@@ -306,7 +296,6 @@ def detect_events(payload: EventDetectionRequest) -> EventDetectionResponse:
         )
     )
 
-    # Sediment disturbance or clogging
     turbidity_jump = (
         r.turbidity > TURB_MEAN + 2.5 * TURB_STD
         or (history and r.turbidity - history[-1].turbidity > 1.5 * TURB_STD)
@@ -324,7 +313,6 @@ def detect_events(payload: EventDetectionRequest) -> EventDetectionResponse:
         )
     )
 
-    # Industrial contamination signatures
     ph_anomaly = abs(r.ph - PH_MEAN) > 1.5 * PH_STD
     flags.append(
         EventSignal(
@@ -353,7 +341,6 @@ def detect_events(payload: EventDetectionRequest) -> EventDetectionResponse:
         )
     )
 
-    # Sensor drift / malfunction cross-check for drift rate
     if not malfunction and history:
         jump = r.turbidity - history[-1].turbidity
         if abs(jump) > 3 * TURB_STD:

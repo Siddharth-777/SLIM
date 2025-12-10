@@ -117,7 +117,6 @@ def _categorize_risk(score: float) -> str:
 
 
 def simulate_digital_twin(payload: DigitalTwinRequest) -> DigitalTwinResponse:
-    # 1) DO drop from warming using learned slope
     raw_drop = TEMP_DO_SLOPE * payload.temperature_rise_c
     do_drop = abs(raw_drop)
     projected_do = DO_MEAN - do_drop
@@ -129,7 +128,6 @@ def simulate_digital_twin(payload: DigitalTwinRequest) -> DigitalTwinResponse:
         f"Projected DO ≈ {projected_do:.2f} mg/L vs baseline {DO_MEAN:.2f}; monitor fish stress if <5 mg/L."
     )
 
-    # 2) Pollution shock response
     turb_spike = TURB_STD * (1 + 3 * payload.pollution_event_strength)
     ph_dip = PH_STD * payload.pollution_event_strength
     do_penalty = DO_STD * (0.5 + payload.pollution_event_strength)
@@ -141,7 +139,6 @@ def simulate_digital_twin(payload: DigitalTwinRequest) -> DigitalTwinResponse:
         f"and DO loss of {do_penalty:.2f} mg/L; deploy booms/aeration within 2 hours."
     )
 
-    # 3) Turbidity recovery time after rain
     recovery = RECOVERY_BENCHMARK.typical_hours
     rainfall_factor = max(0.6, min(1.8, payload.rainfall_mm / 25))
     adjusted_recovery = recovery * rainfall_factor
@@ -153,7 +150,6 @@ def simulate_digital_twin(payload: DigitalTwinRequest) -> DigitalTwinResponse:
         " (assuming similar inflow)."
     )
 
-    # 4) Algae bloom conditions
     heat_score = max(0.0, (payload.temperature_rise_c + TEMP_MEAN - 27) / 5)
     turbidity_score = max(0.0, (TURB_BASELINE + turb_spike - 400) / 400)
     ph_score = max(0.0, (PH_MEAN + 0.3 - 8) / 1.5)
@@ -166,7 +162,6 @@ def simulate_digital_twin(payload: DigitalTwinRequest) -> DigitalTwinResponse:
         " maintain DO sensors and consider algaecide standby."
     )
 
-    # 5) Fish mortality risk zones
     low_do_margin = (DO_MEAN - do_penalty - do_drop)
     mortality_score = np.tanh(max(0.0, (5 - low_do_margin) / 2))
     mortality_description = (
