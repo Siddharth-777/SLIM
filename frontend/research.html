@@ -75,6 +75,8 @@
       <div class="page-header">
         <h1>Research Models</h1>
         <p>Pull insight summaries from graph neural nets, causal uplift models, and evaluation interpreters hosted on the API.</p>
+        <button type="button" id="load-research-btn" style="margin-top: 12px;">Load research data</button>
+        <p id="research-status" style="margin-top: 8px; color: var(--text-muted);">Research endpoints are idle until you load them.</p>
       </div>
 
     <div class="grid">
@@ -99,6 +101,8 @@
   <script>
     const API_BASE = 'https://slim-production.up.railway.app';
     const API_HEADERS = { 'x-api-key': 'password' };
+    const loadResearchBtn = document.getElementById('load-research-btn');
+    const researchStatus = document.getElementById('research-status');
 
     function renderNodes(nodes) {
       return nodes.map(node => `
@@ -140,6 +144,7 @@
     }
 
     async function loadResearch() {
+      if (researchStatus) researchStatus.textContent = 'Loading research endpoints...';
       try {
         const res = await fetch(`${API_BASE}/api/research-models`, { headers: API_HEADERS });
         const data = await res.json();
@@ -162,12 +167,18 @@
           </div>
         `;
         document.getElementById('highlights').innerHTML = data.highlights.map(h => `<li>${h}</li>`).join('');
+        if (researchStatus) researchStatus.textContent = 'Research data loaded from /api/research-models.';
       } catch (err) {
         document.getElementById('graph-summary').innerHTML = '<p class="stat">Unable to reach research endpoint.</p>';
+        if (researchStatus) researchStatus.textContent = 'Unable to load research data. Try again later.';
       }
     }
 
-    loadResearch();
+    loadResearchBtn.addEventListener('click', async () => {
+      loadResearchBtn.disabled = true;
+      await loadResearch();
+      loadResearchBtn.disabled = false;
+    });
   </script>
 </body>
 </html>

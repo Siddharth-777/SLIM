@@ -103,7 +103,11 @@
         </div>
 
         <div class="panel">
-          <h2>Graph analysis</h2>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+            <h2>Graph analysis</h2>
+            <button type="button" id="load-history-btn">Load history</button>
+          </div>
+          <div class="status" id="history-status">History not loaded yet. Click Load history to fetch recent readings.</div>
           <div class="chart-box"><canvas id="historyChart"></canvas></div>
           <div class="stat-grid" id="stat-grid"></div>
         </div>
@@ -123,8 +127,10 @@
     const statusLine = document.getElementById('query-status');
     const answerBlock = document.getElementById('query-answer');
     const statGrid = document.getElementById('stat-grid');
+    const loadHistoryBtn = document.getElementById('load-history-btn');
+    const historyStatus = document.getElementById('history-status');
     let historyChart;
-    let graphSummary = 'Loading sensor history...';
+    let graphSummary = 'History not loaded yet. Use the Load history button to populate the graph.';
 
     function renderAnswer(text) {
       answerBlock.innerHTML = `
@@ -168,6 +174,7 @@
     }
 
     async function loadHistory() {
+      if (historyStatus) historyStatus.textContent = 'Loading sensor history...';
       try {
         const res = await fetch(`${API_BASE}/api/lake-data/history?limit=180`, { headers: API_HEADERS });
         if (!res.ok) throw new Error('History endpoint unavailable');
@@ -206,10 +213,12 @@
 
         buildStats(sorted);
         renderAnswer('Graph context refreshed. Ask a question to blend LLM insight with these trends.');
+        if (historyStatus) historyStatus.textContent = 'History loaded from /api/lake-data/history.';
       } catch (err) {
         graphSummary = 'Unable to load sensor history. The graph will be empty until the API responds.';
         statGrid.innerHTML = '<div class="chip"><h4>History unavailable</h4><p>Check API connectivity.</p></div>';
         renderAnswer('Waiting on graph data. You can still ask the LLM about the dataset summary.');
+        if (historyStatus) historyStatus.textContent = 'History request failed. Try again when the API is reachable.';
       }
     }
 
@@ -238,7 +247,11 @@
       submitQuery(question);
     });
 
-    loadHistory();
+    loadHistoryBtn.addEventListener('click', async () => {
+      loadHistoryBtn.disabled = true;
+      await loadHistory();
+      loadHistoryBtn.disabled = false;
+    });
   </script>
 </body>
 </html>

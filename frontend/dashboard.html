@@ -630,9 +630,10 @@
         <div class="panel">
           <div class="panel-title">Live Readings</div>
           <div class="panel-actions">
+            <button class="action-button" id="load-latest-btn">Load Latest Reading</button>
             <button class="action-button" id="request-reading-btn">Extract ESP32 Reading</button>
           </div>
-          <div class="status-text" id="request-status">Request the ESP32 to capture a fresh reading and store it in Supabase.</div>
+          <div class="status-text" id="request-status">Load the latest stored reading or request the ESP32 to capture a fresh one.</div>
           <div class="latest-reading" id="latest-reading" style="display: none;"></div>
           <div id="sensor-detail">
             <div class="empty-state">
@@ -669,6 +670,7 @@
 
   <script>
     const requestButton = document.getElementById('request-reading-btn');
+    const loadLatestButton = document.getElementById('load-latest-btn');
     const requestStatus = document.getElementById('request-status');
     const latestReadingContainer = document.getElementById('latest-reading');
     const insightGrid = document.getElementById('insight-grid');
@@ -1176,7 +1178,11 @@
     }
 
     requestButton.addEventListener('click', requestEsp32Reading);
-    loadLatestReading();
+    loadLatestButton.addEventListener('click', async () => {
+      loadLatestButton.disabled = true;
+      await loadLatestReading();
+      loadLatestButton.disabled = false;
+    });
   </script>
 </body>
 </html>
