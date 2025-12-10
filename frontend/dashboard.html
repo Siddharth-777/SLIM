@@ -647,6 +647,29 @@
       'S-06': { temp: 18.7, ph: 7.5, oxygen: 8.8, turbidity: 2.6, depth: 14.1, lastUpdate: '3 hours ago' }
     };
 
+    function persistApiKey() {
+      const key = apiKeyInput.value.trim();
+      if (key) {
+        localStorage.setItem('slimApiKey', key);
+      }
+    }
+
+    function loadApiKey() {
+      const storedKey = localStorage.getItem('slimApiKey');
+      if (storedKey) {
+        apiKeyInput.value = storedKey;
+      }
+    }
+
+    function getAuthHeaders(includeJson = true) {
+      const headers = includeJson ? { 'Content-Type': 'application/json' } : {};
+      const key = apiKeyInput.value.trim();
+      if (key) {
+        headers['X-API-KEY'] = key;
+      }
+      return headers;
+    }
+
     let selectedSensor = null;
 
     function initMap() {
