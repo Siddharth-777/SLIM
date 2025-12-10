@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SLIM AI | Simulation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a1628;
+      --surface: #111d32;
+      --border: #1e3a5f;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.6; }
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 18px 0; position: sticky; top: 0; z-index: 10; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .nav { display: flex; align-items: center; justify-content: space-between; }
+    .logo { font-size: 1.1rem; font-weight: 700; color: var(--text); letter-spacing: 0.5px; }
+    .logo span { color: var(--primary); }
+    nav ul { list-style: none; display: flex; gap: 20px; }
+    nav a { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    nav a:hover, nav a.active { color: var(--text); }
+    main { padding: 36px 0 64px; }
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { font-size: 2rem; margin-bottom: 8px; }
+    .page-header p { color: var(--text-muted); }
+    .grid { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 20px; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+    .panel h2 { font-size: 1rem; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; }
+    label { display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 6px; }
+    input[type="number"] { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: #0f1c30; color: var(--text); margin-bottom: 12px; }
+    button { background: var(--primary); color: white; border: none; padding: 12px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.2s, transform 0.2s; }
+    button:hover { background: #2563eb; transform: translateY(-1px); }
+    .card { background: #0f1c30; border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+    .card h3 { font-size: 1rem; margin-bottom: 6px; }
+    .card p { color: var(--text-muted); font-size: 0.95rem; }
+    .badge { display: inline-block; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(59,130,246,0.4); color: var(--primary); background: rgba(59,130,246,0.15); font-weight: 700; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="logo">SLIM <span>AI</span></div>
+      <nav>
+        <ul>
+          <li><a href="dashboard.html">Dashboard</a></li>
+          <li><a href="anomaly.html">Anomaly</a></li>
+          <li><a href="research.html">Research</a></li>
+          <li><a href="simulation.html" class="active">Simulation</a></li>
+          <li><a href="alerts.html">Alerts</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="page-header">
+      <h1>Digital Twin Simulation</h1>
+      <p>Run what-if scenarios via the hosted /api/digital-twin endpoint to stress-test DO, turbidity, and bloom risks.</p>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Scenario Inputs</h2>
+        <form id="sim-form">
+          <label for="temperature_rise_c">Temperature Rise (°C)</label>
+          <input type="number" id="temperature_rise_c" name="temperature_rise_c" step="0.1" value="1.5" required>
+          <label for="pollution_event_strength">Pollution Event Strength (0-1)</label>
+          <input type="number" id="pollution_event_strength" name="pollution_event_strength" step="0.05" min="0" max="1" value="0.35" required>
+          <label for="rainfall_mm">Rainfall (mm)</label>
+          <input type="number" id="rainfall_mm" name="rainfall_mm" step="1" value="20" required>
+          <button type="submit">Simulate</button>
+        </form>
+        <p id="sim-toast" style="margin-top:10px; color: var(--text-muted);">Ready to simulate against https://slim-production.up.railway.app/api/digital-twin</p>
+      </div>
+      <div class="panel">
+        <h2>Outcomes</h2>
+        <div id="sim-results"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const API_BASE = 'https://slim-production.up.railway.app';
+    const simResults = document.getElementById('sim-results');
+    const simToast = document.getElementById('sim-toast');
+
+    function renderCard(title, block) {
+      return `
+        <div class="card">
+          <h3>${title}</h3>
+          <p>${block.description}</p>
+          <p style="margin-top:6px;">${block.impact}</p>
+          <span class="badge">${block.confidence}</span>
+        </div>
+      `;
+    }
+
+    async function runSimulation(payload) {
+      simToast.textContent = 'Simulating...';
+      try {
+        const res = await fetch(`${API_BASE}/api/digital-twin`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('API error');
+        const data = await res.json();
+        simResults.innerHTML = [
+          ['DO Drop Scenario', data.do_drop_scenario],
+          ['Pollution Response', data.pollution_response],
+          ['Turbidity Recovery', data.turbidity_recovery],
+          ['Algae Bloom Risk', data.algae_bloom],
+          ['Fish Mortality Risk', data.fish_mortality_risk],
+        ].map(([title, block]) => renderCard(title, block)).join('');
+        simToast.textContent = 'Simulation complete. Confidence tags mirror historical support.';
+      } catch (err) {
+        simToast.textContent = 'Unable to reach simulation endpoint.';
+      }
+    }
+
+    document.getElementById('sim-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const payload = {
+        temperature_rise_c: parseFloat(e.target.temperature_rise_c.value),
+        pollution_event_strength: parseFloat(e.target.pollution_event_strength.value),
+        rainfall_mm: parseFloat(e.target.rainfall_mm.value)
+      };
+      runSimulation(payload);
+    });
+
+    runSimulation({ temperature_rise_c: 1.5, pollution_event_strength: 0.35, rainfall_mm: 20 });
+  </script>
+</body>
+</html>
