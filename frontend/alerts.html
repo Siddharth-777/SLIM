@@ -89,6 +89,9 @@
           <input type="number" id="rainfall_mm" name="rainfall_mm" step="1" value="18" required>
           <label for="measurement_hour">Measurement Hour (0-23)</label>
           <input type="number" id="measurement_hour" name="measurement_hour" min="0" max="23" value="20" required>
+          <label style="display:flex; align-items:center; gap:8px; margin: 6px 0 12px;">
+            <input type="checkbox" id="include-history" checked style="width:16px; height:16px;"> Use sample trend history
+          </label>
           <button type="submit">Detect Events</button>
         </form>
         <p id="alert-toast" style="margin-top:10px; color: var(--text-muted);">Watching https://slim-production.up.railway.app/api/event-detection</p>
@@ -106,6 +109,11 @@
       'Content-Type': 'application/json',
       'x-api-key': 'password'
     };
+    const sampleHistory = [
+      { ph: 7.05, turbidity: 360, temperature: 27.1, do_level: 5.6 },
+      { ph: 7.02, turbidity: 372, temperature: 27.3, do_level: 5.4 },
+      { ph: 6.98, turbidity: 390, temperature: 27.5, do_level: 5.3 }
+    ];
     const results = document.getElementById('alert-results');
     const toast = document.getElementById('alert-toast');
 
@@ -138,16 +146,17 @@
 
     document.getElementById('alert-form').addEventListener('submit', (e) => {
       e.preventDefault();
+      const reading = {
+        ph: parseFloat(e.target.ph.value),
+        turbidity: parseFloat(e.target.turbidity.value),
+        temperature: parseFloat(e.target.temperature.value),
+        do_level: parseFloat(e.target.do_level.value)
+      };
       const payload = {
-        reading: {
-          ph: parseFloat(e.target.ph.value),
-          turbidity: parseFloat(e.target.turbidity.value),
-          temperature: parseFloat(e.target.temperature.value),
-          do_level: parseFloat(e.target.do_level.value)
-        },
+        reading,
         rainfall_mm: parseFloat(e.target.rainfall_mm.value),
         measurement_hour: parseInt(e.target.measurement_hour.value, 10),
-        previous_readings: []
+        previous_readings: document.getElementById('include-history').checked ? sampleHistory : [reading]
       };
       detectEvents(payload);
     });
@@ -156,7 +165,7 @@
       reading: { ph: 7.1, turbidity: 410, temperature: 27.8, do_level: 5.2 },
       rainfall_mm: 18,
       measurement_hour: 20,
-      previous_readings: []
+      previous_readings: sampleHistory
     });
   </script>
 </body>
