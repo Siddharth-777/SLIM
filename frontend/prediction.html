@@ -37,16 +37,16 @@
     }
 
     header {
-      background: var(--panel);
-      border-bottom: 1px solid var(--border);
-      padding: 20px 0;
-      position: sticky;
+      background: transparent;
+      border-bottom: none;
+      position: absolute;
       top: 0;
+      width: 100%;
       z-index: 100;
     }
 
     .container {
-      max-width: 1400px;
+      max-width: 1200px;
       margin: 0 auto;
       padding: 0 24px;
     }
@@ -54,40 +54,38 @@
     .nav {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
+      padding: 32px 0;
     }
 
     .logo {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .logo span {
-      color: var(--accent);
-      margin-left: 8px;
+      display: none;
     }
 
     nav ul {
       list-style: none;
       display: flex;
-      gap: 32px;
+      gap: 48px;
     }
 
     nav a {
-      color: var(--muted);
+      color: rgba(255, 255, 255, 0.7);
       text-decoration: none;
       font-weight: 600;
       transition: color 0.2s;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     nav a:hover,
     nav a.active {
-      color: var(--text);
+      color: white;
     }
 
     .main-content {
-      padding: 32px 0 48px;
+      padding: 140px 0 48px;
     }
 
     .shell {
@@ -258,16 +256,15 @@
   <header>
     <div class="container">
       <div class="nav">
-        <div class="logo">SLIM<span>AI</span></div>
+        <div class="logo">SLIM AI<span>Lake Intelligence</span></div>
         <nav>
           <ul>
-            <li><a href="/frontend/index.html">Home</a></li>
-            <li><a href="/frontend/dashboard.html">Dashboard</a></li>
-            <li><a href="/frontend/alerts.html">Alerts</a></li>
-            <li><a href="/frontend/research.html">Research</a></li>
-            <li><a href="/frontend/prediction.html" class="active">Prediction</a></li>
-            <li><a href="/frontend/anomaly.html">Anomalies</a></li>
-            <li><a href="/frontend/simulation.html">Simulate</a></li>
+            <li><a class="active" href="prediction.html">Prediction</a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="anomaly.html">Anomaly</a></li>
+            <li><a href="research.html">Research</a></li>
+            <li><a href="simulation.html">Simulation</a></li>
+            <li><a href="alerts.html">Alerts</a></li>
           </ul>
         </nav>
       </div>
