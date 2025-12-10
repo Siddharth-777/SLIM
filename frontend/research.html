@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SLIM AI | Research</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a1628;
+      --surface: #111d32;
+      --border: #1e3a5f;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.6; }
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 18px 0; position: sticky; top: 0; z-index: 10; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .nav { display: flex; align-items: center; justify-content: space-between; }
+    .logo { font-size: 1.1rem; font-weight: 700; color: var(--text); letter-spacing: 0.5px; }
+    .logo span { color: var(--primary); }
+    nav ul { list-style: none; display: flex; gap: 20px; }
+    nav a { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    nav a:hover, nav a.active { color: var(--text); }
+    main { padding: 36px 0 64px; }
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { font-size: 2rem; margin-bottom: 8px; }
+    .page-header p { color: var(--text-muted); }
+    .grid { display: grid; grid-template-columns: 1.3fr 0.7fr; gap: 20px; align-items: start; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+    .panel h2 { font-size: 1rem; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; }
+    .stat {
+      background: #0f1c30;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .stat h3 { font-size: 0.95rem; margin-bottom: 4px; }
+    .stat p { color: var(--text-muted); font-size: 0.9rem; }
+    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border); background: #0f1c30; font-size: 0.85rem; margin: 4px 4px 0 0; }
+    .list { color: var(--text-muted); font-size: 0.95rem; padding-left: 18px; }
+    .tag { background: rgba(59,130,246,0.12); color: var(--primary); border: 1px solid rgba(59,130,246,0.4); padding: 6px 10px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; display: inline-block; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="logo">SLIM <span>AI</span></div>
+      <nav>
+        <ul>
+          <li><a href="dashboard.html">Dashboard</a></li>
+          <li><a href="anomaly.html">Anomaly</a></li>
+          <li><a href="research.html" class="active">Research</a></li>
+          <li><a href="simulation.html">Simulation</a></li>
+          <li><a href="alerts.html">Alerts</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="page-header">
+      <h1>Research Models</h1>
+      <p>Pull insight summaries from graph neural nets, causal uplift models, and evaluation interpreters hosted on the API.</p>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Graph + Causal Insights</h2>
+        <div id="graph-summary"></div>
+        <div style="margin:12px 0;">
+          <span class="tag" id="prop-tag">Propagation Horizon</span>
+        </div>
+        <div id="propagation"></div>
+      </div>
+      <div class="panel">
+        <h2>Evaluation</h2>
+        <div id="metrics"></div>
+        <h2 style="margin-top:18px;">Highlights</h2>
+        <ul class="list" id="highlights"></ul>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const API_BASE = 'https://slim-production.up.railway.app';
+    const API_HEADERS = { 'x-api-key': 'password' };
+
+    function renderNodes(nodes) {
+      return nodes.map(node => `
+        <div class="stat">
+          <h3>Buoy ${node.buoy_id} · Risk ${node.risk_score.toFixed(2)}</h3>
+          <p>pH ${node.mean_ph.toFixed(2)} | Turbidity ${node.mean_turbidity.toFixed(1)} | Neighbors: ${node.top_neighbor_influences.join(', ')}</p>
+          <p>${node.interpretation}</p>
+        </div>
+      `).join('');
+    }
+
+    function renderEdges(edges) {
+      return edges.slice(0,4).map(edge => `
+        <span class="pill">${edge.source} → ${edge.target} (${edge.weight.toFixed(2)})</span>
+      `).join('');
+    }
+
+    function renderPropagation(propagation) {
+      const propTag = document.getElementById('prop-tag');
+      if (propagation[0]) {
+        propTag.textContent = `${propagation[0].horizon_hours}h forecast band`;
+      }
+      return propagation.map(p => `
+        <div class="stat">
+          <h3>${p.horizon_hours}h</h3>
+          <p>Expected DO ${p.expected_do.toFixed(2)} mg/L (range ${p.lower_bound.toFixed(2)}–${p.upper_bound.toFixed(2)})</p>
+          <p>${p.commentary}</p>
+        </div>
+      `).join('');
+    }
+
+    function renderMetrics(metrics) {
+      return metrics.map(m => `
+        <div class="stat">
+          <h3>${m.name}: ${m.value.toFixed(3)}</h3>
+          <p>${m.interpretation}</p>
+        </div>
+      `).join('');
+    }
+
+    async function loadResearch() {
+      try {
+        const res = await fetch(`${API_BASE}/api/research-models`, { headers: API_HEADERS });
+        const data = await res.json();
+        const graph = data.graph_network;
+        document.getElementById('graph-summary').innerHTML = `
+          ${renderNodes(graph.nodes)}
+          <div style="margin-top:8px;">${renderEdges(graph.edges)}</div>
+          <div class="stat" style="margin-top:12px;">
+            <h3>Takeaway</h3>
+            <p>${graph.takeaway}</p>
+          </div>
+        `;
+        document.getElementById('propagation').innerHTML = renderPropagation(graph.propagation);
+        document.getElementById('metrics').innerHTML = `
+          <div class="stat"><h3>${data.evaluation.backtest_days}-day backtest</h3><p>${data.evaluation.calibration}</p></div>
+          ${renderMetrics(data.evaluation.metrics)}
+          <div class="stat">
+            <h3>Top drivers</h3>
+            <p>${data.evaluation.feature_attributions.map(f => `${f.feature} (${(f.importance*100).toFixed(1)}%)`).join(' · ')}</p>
+          </div>
+        `;
+        document.getElementById('highlights').innerHTML = data.highlights.map(h => `<li>${h}</li>`).join('');
+      } catch (err) {
+        document.getElementById('graph-summary').innerHTML = '<p class="stat">Unable to reach research endpoint.</p>';
+      }
+    }
+
+    loadResearch();
+  </script>
+</body>
+</html>
